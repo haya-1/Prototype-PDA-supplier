@@ -1,0 +1,45 @@
+[
+    {
+    "box_code": "CD250424000001",
+    "is_empty": false,
+    "sku_detail": [
+        {
+            "fnsku": "X001P58RN9",
+            "chinese_sku": "ST1839/白色/9",
+            "quantity": "30"
+        },
+        {
+            "fnsku": "X001P59JSB",
+            "chinese_sku": "ST1839/灰白/9",
+            "quantity": "30"
+        },
+        {
+            "fnsku": "X001P67ABJ",
+            "chinese_sku": "ST1839/灰色/8",
+            "quantity": "10"
+        }
+    ]
+    },
+    {
+        "box_code": "CD250424000002",
+        "is_empty": true,
+        "sku_detail": []
+    },
+    {
+        "box_code": "CD250424000003",
+        "is_empty": false,
+        "sku_detail": [
+            {
+                "fnsku": "X001P58RN9",
+                "chinese_sku": "ST1839/白色/9",
+                "quantity": "12"
+            },
+            {
+                "fnsku": "X001P59JSB",
+                "chinese_sku": "ST1839/灰白/9",
+                "quantity": "96"
+            }
+        
+        ]
+    }
+]

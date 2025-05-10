@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发货修改列表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            padding-bottom: 80px; /* 为底部按钮留出空间 */
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .filter-area {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .filter-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .filter-input::placeholder {
+            color: #999;
+        }
+        .list-area {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .list-item {
+            background: #fff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            cursor: pointer;
+        }
+        .list-item:hover {
+            background-color: #f8f9fa;
+        }
+        .list-item.selected {
+            background-color: #e8f0fe;
+            border: 1px solid #4285f4;
+        }
+        .list-item-main {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .list-item-code {
+            font-size: 16px;
+            color: #333;
+            font-weight: bold;
+        }
+        .list-item-spu {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .list-item-spu-label {
+            color: #333;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .list-item-spu-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: bold;
+        }
+        .list-item-sub {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+        }
+        .list-item-purchase {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .list-item-purchase-label {
+            color: #666;
+            font-size: 15px;
+        }
+        .list-item-purchase-value {
+            color: #666;
+            font-size: 15px;
+        }
+        .list-item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .list-item-quantity-label {
+            color: #666;
+            font-size: 16px;
+        }
+        .list-item-quantity-value {
+            color: #666;
+            font-size: 16px;
+        }
+        .list-item-date {
+            color: #666;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .back-button {
+            position: fixed;
+            top: 10px;
+            left: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #333;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+        }
+        .back-button:before {
+            content: "<";
+            font-size: 18px;
+        }
+        .bottom-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: none;
+            background-color: #fff;
+            padding: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            flex-direction: column;
+            gap: 10px;
+        }
+        .bottom-buttons.show {
+            display: flex;
+        }
+        .bottom-button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-repack {
+            background-color: #4285f4;
+            color: #fff;
+        }
+        .btn-add {
+            background-color: #34a853;
+            color: #fff;
+        }
+        .btn-unbind {
+            background-color: #ea4335;
+            color: #fff;
+        }
+        .btn-cancel {
+            background-color: #dadce0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="history.back()"></button>
+    <div class="container">
+        <div class="header">
+            <h1>发货修改列表</h1>
+        </div>
+        <div class="filter-area">
+            <input type="text" class="filter-input" id="purchaseOrderFilter" placeholder="请输入采购单号筛选">
+        </div>
+        <div class="list-area" id="shippingList"></div>
+    </div>
+
+    <div class="bottom-buttons" id="bottomButtons">
+        <button class="bottom-button btn-repack" onclick="handleRepack()">重新装箱</button>
+        <button class="bottom-button btn-add" onclick="handleAddBox()">新增箱子</button>
+        <button class="bottom-button btn-unbind" onclick="handleUnbind()">解绑箱子</button>
+        <button class="bottom-button btn-cancel" onclick="handleCancel()">取消</button>
+    </div>
+
+    <script>
+        // 模拟数据
+        const shippingModifyData = [
+            {
+                "plan_code": "PN20250422002",
+                "purchase_order_code": "ST20250418001",
+                "expected_delivery_time": "2024-05-01",
+                "SPU": "ST1839",
+                "quantity": "50"
+            },
+            {
+                "plan_code": "PN20250422001",
+                "purchase_order_code": "ST20250417002",
+                "expected_delivery_time": "2024-05-01",
+                "SPU": "ST1839",
+                "quantity": "108"
+            }
+        ];
+
+        let selectedPlanCode = null;
+
+        // 初始化列表
+        function initList() {
+            const listContainer = document.getElementById('shippingList');
+            listContainer.innerHTML = shippingModifyData.map(item => `
+                <div class="list-item" onclick="handleItemClick('${item.plan_code}')" id="item-${item.plan_code}">
+                    <div class="list-item-main">
+                        <div class="list-item-code">${item.plan_code}</div>
+                        <div class="list-item-spu">
+                            <span class="list-item-spu-label">货号:</span>
+                            <span class="list-item-spu-value">${item.SPU}</span>
+                        </div>
+                    </div>
+                    <div class="list-item-sub">
+                        <div class="list-item-purchase">
+                            <span class="list-item-purchase-label">采购单:</span>
+                            <span class="list-item-purchase-value">${item.purchase_order_code}</span>
+                        </div>
+                        <div class="list-item-quantity">
+                            <span class="list-item-quantity-label">计划量:</span>
+                            <span class="list-item-quantity-value">${item.quantity}</span>
+                        </div>
+                    </div>
+                    <div class="list-item-date">预计到货时间: ${item.expected_delivery_time}</div>
+                </div>
+            `).join('');
+        }
+
+        // 新增：采购单号筛选功能
+        document.getElementById('purchaseOrderFilter').addEventListener('input', function(e) {
+            const filterValue = e.target.value.trim().toLowerCase();
+            const filtered = shippingModifyData.filter(item => item.purchase_order_code.toLowerCase().includes(filterValue));
+            const listContainer = document.getElementById('shippingList');
+            listContainer.innerHTML = filtered.map(item => `
+                <div class="list-item" onclick="handleItemClick('${item.plan_code}')" id="item-${item.plan_code}">
+                    <div class="list-item-main">
+                        <div class="list-item-code">${item.plan_code}</div>
+                        <div class="list-item-spu">
+                            <span class="list-item-spu-label">货号:</span>
+                            <span class="list-item-spu-value">${item.SPU}</span>
+                        </div>
+                    </div>
+                    <div class="list-item-sub">
+                        <div class="list-item-purchase">
+                            <span class="list-item-purchase-label">采购单:</span>
+                            <span class="list-item-purchase-value">${item.purchase_order_code}</span>
+                        </div>
+                        <div class="list-item-quantity">
+                            <span class="list-item-quantity-label">计划量:</span>
+                            <span class="list-item-quantity-value">${item.quantity}</span>
+                        </div>
+                    </div>
+                    <div class="list-item-date">预计到货时间: ${item.expected_delivery_time}</div>
+                </div>
+            `).join('');
+        });
+
+        // 处理列表项点击
+        function handleItemClick(planCode) {
+            // 移除之前选中项的样式
+            if (selectedPlanCode) {
+                document.getElementById(`item-${selectedPlanCode}`).classList.remove('selected');
+            }
+
+            // 如果点击的是已选中项，则取消选中
+            if (selectedPlanCode === planCode) {
+                selectedPlanCode = null;
+                document.getElementById('bottomButtons').classList.remove('show');
+            } else {
+                // 选中新项
+                selectedPlanCode = planCode;
+                document.getElementById(`item-${planCode}`).classList.add('selected');
+                document.getElementById('bottomButtons').classList.add('show');
+            }
+        }
+
+        // 重新装箱
+        function handleRepack() {
+            // 跳转到重新装箱页面
+            location.href = 'shipping_modify_repack.html?mode=repack';
+        }
+
+        // 新增箱子
+        function handleAddBox() {
+            // 跳转到新增箱子页面
+            location.href = 'shipping_modify_repack.html?mode=add';
+        }
+
+        // 解绑箱子
+        function handleUnbind() {
+            if (!selectedPlanCode) return;
+            // 跳转到解绑箱子页面，传入入库计划单号用于校验箱码
+            location.href = `shipping_modify_unbind.html?code=${selectedPlanCode}`;
+        }
+
+        // 取消操作
+        function handleCancel() {
+            if (selectedPlanCode) {
+                document.getElementById(`item-${selectedPlanCode}`).classList.remove('selected');
+                selectedPlanCode = null;
+                document.getElementById('bottomButtons').classList.remove('show');
+            }
+        }
+
+        // 页面加载时初始化列表
+        window.onload = initList;
+    </script>
+</body>
+</html> 

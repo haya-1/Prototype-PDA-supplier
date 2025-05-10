@@ -1,0 +1,84 @@
+[
+    {
+        "purchase_order_code": "ST20250423001",
+        "purchase_order_expected_delivery_time": "2025-04-23",
+        "SPU": "ST1839",
+        "purchase_order_total_quantity": "4068",
+        "purchase_order_pending_arrival_quantity": "70",
+        "purchase_order_pending_arrival_detail": [
+            {
+                "fnsku": "X001P58RN9",
+                "chinese_sku": "ST1839/白色/9",
+                "purchase_order_pending_arrival_quantity": "30"
+            },
+            {
+                "fnsku": "X001P59JSB",
+                "chinese_sku": "ST1839/灰白/9",
+                "purchase_order_pending_arrival_quantity": "30"
+            },
+            {
+                "fnsku": "X001P67ABJ",
+                "chinese_sku": "ST1839/灰色/8",
+                "purchase_order_pending_arrival_quantity": "10"
+            }
+        ]
+    },
+    {
+        "purchase_order_code": "ST20250423002",
+        "purchase_order_expected_delivery_date": "2025-04-24",
+        "SPU": "ST1839",
+        "purchase_order_total_quantity": "5068",
+        "purchase_order_pending_arrival_quantity": "108",
+        "purchase_order_pending_arrival_detail": [
+            {
+                "fnsku": "X001P58RN9",
+                "chinese_sku": "ST1839/白色/9",
+                "purchase_order_pending_arrival_quantity": "12"
+            },
+            {
+                "fnsku": "X001P59JSB",
+                "chinese_sku": "ST1839/灰白/9",
+                "purchase_order_pending_arrival_quantity": "96"
+            }
+        ]
+    },
+    {
+        "purchase_order_code": "ST20250423003",
+        "purchase_order_expected_delivery_date": "2025-07-01",
+        "SPU": "ST1839",
+        "purchase_order_total_quantity": "5090",
+        "purchase_order_pending_arrival_quantity": "5090",
+        "purchase_order_pending_arrival_detail": [
+            {
+                "fnsku": "X001P58RN9",
+                "chinese_sku": "ST1839/白色/9",
+                "purchase_order_pending_arrival_quantity": "1800"
+            },
+            {
+                "fnsku": "X001P59JSB",
+                "chinese_sku": "ST1839/灰白/9",
+                "purchase_order_pending_arrival_quantity": "1800"
+            },
+            {
+                "fnsku": "X001P67ABJ",
+                "chinese_sku": "ST1839/灰色/8",
+                "purchase_order_pending_arrival_quantity": "1000"
+            },
+            {
+                "fnsku": "X001J78TS",
+                "chinese_sku": "ST1839/白色/8",
+                "purchase_order_pending_arrival_quantity": "100"
+            },
+            {
+                "fnsku": "X001P53RTS",
+                "chinese_sku": "ST1839/白色/7",
+                "purchase_order_pending_arrival_quantity": "200"
+            },
+            {
+                "fnsku": "X001T47PS7",
+                "chinese_sku": "ST1839/灰色/7",
+                "purchase_order_pending_arrival_quantity": "190"
+            }
+        ]
+    }
+]

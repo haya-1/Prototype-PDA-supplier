@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发货申请详情</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            padding-bottom: 90px;
+            margin: 0;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            height: calc(100vh - 110px);
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .scan-area {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        .scan-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .info-area {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .info-label {
+            color: #666;
+        }
+        .info-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .list-area {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex: 1;
+            overflow-y: auto;
+        }
+        .list-header {
+            display: grid;
+            grid-template-columns: 1.2fr 2.3fr 1.2fr;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+        .list-item {
+            display: grid;
+            grid-template-columns: 1.2fr 2.3fr 1.2fr;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+            color: #666;
+        }
+        .quantity-cell {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .scanned-quantity {
+            color: #28a745;
+        }
+        .pending-quantity {
+            color: black;
+        }
+        .button-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 15px 20px;
+            background-color: #f5f5f5;
+            z-index: 100;
+        }
+        .button {
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .clear-button {
+            background-color: #e04b31;
+            color: #fff;
+        }
+        .confirm-button {
+            background-color: #1d87ea;
+            color: #fff;
+        }
+        .alert-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .alert-content {
+            background-color: #333;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            color: #fff;
+            width: 200px;
+            position: relative;
+        }
+        .alert-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: #333;
+        }
+        .alert-text {
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            width: 300px;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .modal-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .modal-button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .modal-cancel {
+            background-color: #6c757d;
+            color: #fff;
+        }
+        .modal-confirm {
+            background-color: #1d87ea;
+            color: #fff;
+        }
+        .back-button {
+            position: fixed;
+            top: 10px;
+            left: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #333;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+        }
+        .back-button:before {
+            content: "<";
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="history.back()"></button>
+    <div class="container">
+        <div class="header">
+            <h1>扫码明细</h1>
+        </div>
+        <div class="scan-area">
+            <input type="text" class="scan-input" id="boxCodeInput" placeholder="请扫描箱码">
+        </div>
+        <div class="info-area">
+            <div class="info-row">
+                <div class="info-label">采购单号：</div>
+                <div class="info-value" id="purchaseCode">PO202404230001</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">主要货号：</div>
+                <div class="info-value" id="spu">ST1839</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">已扫数量/待到货量：</div>
+                <div class="info-value" id="quantityInfo">0/50</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">已扫箱数：</div>
+                <div class="info-value" id="scannedBoxCount">0</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">当前箱码：</div>
+                <div class="info-value" id="currentBoxCode">-</div>
+            </div>
+        </div>
+        <div class="list-area">
+            <div class="list-header">
+                <div>条码</div>
+                <div>货号/颜色/尺码</div>
+                <div>已扫/待到货</div>
+            </div>
+            <div id="skuList"></div>
+        </div>
+        <div class="button-area">
+            <button class="button clear-button" onclick="clearScannedItems()">清空已扫箱码</button>
+            <button class="button confirm-button" onclick="showDeliveryTimeModal()">确认发货申请</button>
+        </div>
+    </div>
+
+    <!-- 提示框 -->
+    <div class="alert-overlay" id="alertOverlay">
+        <div class="alert-content">
+            <div class="alert-icon">!</div>
+            <div class="alert-text"></div>
+        </div>
+    </div>
+
+    <!-- 预计到货时间选择框 -->
+    <div class="modal-overlay" id="deliveryTimeModal">
+        <div class="modal-content">
+            <div class="modal-title">选择预计到货时间</div>
+            <input type="date" class="modal-input" id="deliveryTimeInput">
+            <div class="modal-buttons">
+                <button class="modal-button modal-cancel" onclick="hideDeliveryTimeModal()">取消</button>
+                <button class="modal-button modal-confirm" onclick="confirmDeliveryTime()">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟数据
+        const purchaseOrdersData = [
+            {
+                "purchase_order_code": "ST20250423001",
+                "purchase_order_expected_delivery_time": "2025-04-23",
+                "SPU": "ST1839",
+                "purchase_order_total_quantity": "4068",
+                "purchase_order_pending_arrival_quantity": "70",
+                "purchase_order_pending_arrival_detail": [
+                    {
+                        "fnsku": "X001P58RN9",
+                        "chinese_sku": "ST1839/白色/9",
+                        "purchase_order_pending_arrival_quantity": "30"
+                    },
+                    {
+                        "fnsku": "X001P59JSB",
+                        "chinese_sku": "ST1839/灰白/9",
+                        "purchase_order_pending_arrival_quantity": "30"
+                    },
+                    {
+                        "fnsku": "X001P67ABJ",
+                        "chinese_sku": "ST1839/灰色/8",
+                        "purchase_order_pending_arrival_quantity": "10"
+                    }
+                ]
+            },
+            {
+                "purchase_order_code": "ST20250423002",
+                "purchase_order_expected_delivery_time": "2025-04-24",
+                "SPU": "ST1839",
+                "purchase_order_total_quantity": "5068",
+                "purchase_order_pending_arrival_quantity": "108",
+                "purchase_order_pending_arrival_detail": [
+                    {
+                        "fnsku": "X001P58RN9",
+                        "chinese_sku": "ST1839/白色/9",
+                        "purchase_order_pending_arrival_quantity": "12"
+                    },
+                    {
+                        "fnsku": "X001P59JSB",
+                        "chinese_sku": "ST1839/灰白/9",
+                        "purchase_order_pending_arrival_quantity": "96"
+                    }
+                ]
+            },
+            {
+                "purchase_order_code": "ST20250423003",
+                "purchase_order_expected_delivery_date": "2025-07-01",
+                "SPU": "ST1839",
+                "purchase_order_total_quantity": "5090",
+                "purchase_order_pending_arrival_quantity": "5090",
+                "purchase_order_pending_arrival_detail": [
+            {
+                "fnsku": "X001P58RN9",
+                "chinese_sku": "ST1839/白色/9",
+                "purchase_order_pending_arrival_quantity": "1800"
+            },
+            {
+                "fnsku": "X001P59JSB",
+                "chinese_sku": "ST1839/灰白/9",
+                "purchase_order_pending_arrival_quantity": "1800"
+            },
+            {
+                "fnsku": "X001P67ABJ",
+                "chinese_sku": "ST1839/灰色/8",
+                "purchase_order_pending_arrival_quantity": "1000"
+            },
+            {
+                "fnsku": "X001J78TS",
+                "chinese_sku": "ST1839/白色/8",
+                "purchase_order_pending_arrival_quantity": "100"
+            },
+            {
+                "fnsku": "X001P53RTS",
+                "chinese_sku": "ST1839/白色/7",
+                "purchase_order_pending_arrival_quantity": "200"
+            },
+            {
+                "fnsku": "X001T47PS7",
+                "chinese_sku": "ST1839/灰色/7",
+                        "purchase_order_pending_arrival_quantity": "190"
+                    }
+                ]
+            }
+        ];
+
+        // 获取URL参数中的采购单号
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderCode = urlParams.get('code');
+
+        // 从 sessionStorage 获取临时更新的数据
+        const tempUpdatedData = JSON.parse(sessionStorage.getItem('tempUpdatedData') || '{}');
+
+        // 根据采购单号获取对应的采购单数据
+        let currentPurchaseOrder = purchaseOrdersData.find(order => order.purchase_order_code === orderCode);
+        
+        // 如果没有找到对应的采购单，返回列表页
+        if (!currentPurchaseOrder) {
+            location.href = 'shipping_apply_list.html';
+        }
+
+        // 如果有临时数据，更新当前采购单的数据
+        if (tempUpdatedData[orderCode]) {
+            currentPurchaseOrder = {
+                ...currentPurchaseOrder,
+                purchase_order_pending_arrival_quantity: tempUpdatedData[orderCode].pending_quantity,
+                purchase_order_pending_arrival_detail: currentPurchaseOrder.purchase_order_pending_arrival_detail.map(detail => ({
+                    ...detail,
+                    purchase_order_pending_arrival_quantity: 
+                        tempUpdatedData[orderCode].detail[detail.fnsku] || detail.purchase_order_pending_arrival_quantity
+                }))
+            };
+        }
+
+        let scannedItems = {};
+        let currentBoxCode = '';
+        let scannedBoxCodes = []; // 添加已扫描箱码数组
+
+        // 初始化页面数据
+        document.getElementById('purchaseCode').textContent = currentPurchaseOrder.purchase_order_code;
+        document.getElementById('spu').textContent = currentPurchaseOrder.SPU;
+        document.getElementById('quantityInfo').textContent = 
+            `0/${currentPurchaseOrder.purchase_order_pending_arrival_quantity}`;
+        
+        // 初始化显示SKU列表
+        updateSkuList();
+
+        // 箱码验证
+        // function validateBoxCode(code) {
+        //     const regex = /^CD\d{12}$/;
+        //     if (!regex.test(code)) {
+        //         return false;
+        //     }
+
+        //     const dateStr = code.substring(2, 8);
+        //     const year = 2000 + parseInt(dateStr.substring(0, 2));
+        //     const month = parseInt(dateStr.substring(2, 4));
+        //     const day = parseInt(dateStr.substring(4, 6));
+
+        //     const date = new Date(year, month - 1, day);
+        //     return date.getFullYear() === year && 
+        //            date.getMonth() === month - 1 && 
+        //            date.getDate() === day &&
+        //            month >= 1 && month <= 12 &&
+        //            day >= 1 && day <= 31;
+        // }
+
+        // 显示提示框
+        function showAlert(message) {
+            const overlay = document.getElementById('alertOverlay');
+            const alertText = overlay.querySelector('.alert-text');
+            alertText.textContent = message;
+            overlay.style.display = 'flex';
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 2000);
+        }
+
+        // 更新SKU列表
+        function updateSkuList() {
+            const skuList = document.getElementById('skuList');
+            skuList.innerHTML = currentPurchaseOrder.purchase_order_pending_arrival_detail.map(item => {
+                const scannedQuantity = scannedItems[item.fnsku]?.quantity || 0;
+                return `
+                    <div class="list-item">
+                        <div>${item.fnsku}</div>
+                        <div>${item.chinese_sku}</div>
+                        <div class="quantity-cell">
+                            <span class="scanned-quantity">${scannedQuantity}</span>
+                            <span>/</span>
+                            <span class="pending-quantity">${item.purchase_order_pending_arrival_quantity}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 更新数量信息
+        function updateQuantityInfo() {
+            const totalScanned = Object.values(scannedItems).reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('quantityInfo').textContent = 
+                `${totalScanned}/${currentPurchaseOrder.purchase_order_pending_arrival_quantity}`;
+        }
+
+        // 清空已扫明细
+        function clearScannedItems() {
+            scannedItems = {};
+            currentBoxCode = '';
+            scannedBoxCodes = []; // 清空已扫描箱码数组
+            document.getElementById('currentBoxCode').textContent = '-';
+            document.getElementById('scannedBoxCount').textContent = '0';
+            updateSkuList();
+            updateQuantityInfo();
+        }
+
+        // 显示预计到货时间选择框
+        function showDeliveryTimeModal() {
+            // 新增：校验已扫箱数是否为0
+            if (scannedBoxCodes.length === 0) {
+                showAlert('计划发货0件，请扫描箱码');
+                return;
+            }
+            const modal = document.getElementById('deliveryTimeModal');
+            const input = document.getElementById('deliveryTimeInput');
+            input.value = currentPurchaseOrder.purchase_order_expected_delivery_time;
+            modal.style.display = 'flex';
+        }
+
+        // 隐藏预计到货时间选择框
+        function hideDeliveryTimeModal() {
+            document.getElementById('deliveryTimeModal').style.display = 'none';
+        }
+
+        // 确认预计到货时间
+        function confirmDeliveryTime() {
+            const newDeliveryTime = document.getElementById('deliveryTimeInput').value;
+            if (!newDeliveryTime) {
+                showAlert('请选择预计到货时间');
+                return;
+            }
+
+            // 计算已扫描的总数量
+            const scannedTotals = {};
+            Object.entries(scannedItems).forEach(([fnsku, item]) => {
+                scannedTotals[fnsku] = item.quantity;
+            });
+
+            // 更新临时数据
+            const tempData = JSON.parse(sessionStorage.getItem('tempUpdatedData') || '{}');
+            
+            // 计算新的待到货数量
+            const newPendingQuantity = (parseInt(currentPurchaseOrder.purchase_order_pending_arrival_quantity) - 
+                Object.values(scannedItems).reduce((sum, item) => sum + item.quantity, 0)).toString();
+
+            // 计算每个SKU的新待到货数量
+            const newDetail = {};
+            currentPurchaseOrder.purchase_order_pending_arrival_detail.forEach(detail => {
+                const scannedQty = scannedItems[detail.fnsku]?.quantity || 0;
+                const newQty = (parseInt(detail.purchase_order_pending_arrival_quantity) - scannedQty).toString();
+                newDetail[detail.fnsku] = newQty;
+            });
+
+            tempData[orderCode] = {
+                pending_quantity: newPendingQuantity,
+                detail: newDetail
+            };
+
+            sessionStorage.setItem('tempUpdatedData', JSON.stringify(tempData));
+            
+            // 立即关闭弹窗
+            hideDeliveryTimeModal();
+            // 显示0.7秒"确认成功"提示
+            showAlert('确认成功');
+            setTimeout(() => {
+                location.href = 'shipping_apply_list.html';
+            }, 700);
+        }
+
+        // 模拟箱子SKU数据
+        const boxSkuData = {
+            "CD250423000001": [
+                { fnsku: "X001P58RN9", chinese_sku: "ST1839/白色/9", quantity: 8 },
+                { fnsku: "X001P59JSB", chinese_sku: "ST1839/灰白/9", quantity: 10 },
+            ],
+            "CD250423000002": [
+                { fnsku: "X001P67ABJ", chinese_sku: "ST1839/灰色/8", quantity: 6 },
+                { fnsku: "X001P58RN9", chinese_sku: "ST1839/白色/9", quantity: 12 }
+            ],
+            "CD250423000003": [
+                { fnsku: "X001P58RN9", chinese_sku: "ST1839/白色/9", quantity: 6 },
+                { fnsku: "X001P59JSB", chinese_sku: "ST1839/灰白/9", quantity: 6 },
+                { fnsku: "X001P67ABJ", chinese_sku: "ST1839/灰色/8", quantity: 6 }
+            ],
+            "CD250423000004": [
+                { fnsku: "X001J78TS", chinese_sku: "ST1839/白色/8", quantity: 9 },
+                { fnsku: "X001P53RTS", chinese_sku: "ST1839/白色/7", quantity: 9 }
+            ],
+            "CD250423000005": [
+                { fnsku: "X001T47PS7", chinese_sku: "ST1839/灰色/7", quantity: 18 }
+            ],
+            "CD250423000006": [
+                { fnsku: "X001P58RN9", chinese_sku: "ST1839/白色/9", quantity: 10 },
+                { fnsku: "X001O46CDK", chinese_sku: "ST1839/灰色/9", quantity: 8 }
+            ],
+            "CD250423000007": [
+                { fnsku: "X001P59JSB", chinese_sku: "ST1839/灰白/9", quantity: 12 },
+                { fnsku: "X001J78TS", chinese_sku: "ST1839/白色/8", quantity: 6 }
+            ],
+            "CD250423000008": [
+                { fnsku: "X001P53RTS", chinese_sku: "ST1839/白色/7", quantity: 8 },
+                { fnsku: "X001T47PS7", chinese_sku: "ST1839/灰色/7", quantity: 10 }
+            ],
+            "CD250423000009": [
+                { fnsku: "X001P58RN9", chinese_sku: "ST1839/白色/9", quantity: 6 },
+                { fnsku: "X001P59JSB", chinese_sku: "ST1839/灰白/9", quantity: 6 },
+                { fnsku: "X001T47PS7", chinese_sku: "ST1839/灰色/7", quantity: 6 }
+            ],
+            "CD250423000010": [
+                
+            ],
+            "CD250423000011": { skus: [
+                { fnsku: "X001P58RN9", chinese_sku: "ST1839/白色/9", quantity: 4 },
+                { fnsku: "X001P59JSB", chinese_sku: "ST1839/灰白/9", quantity: 4 },
+                { fnsku: "X001P67ABJ", chinese_sku: "ST1839/灰色/8", quantity: 5 },
+                { fnsku: "X001J78TS", chinese_sku: "ST1839/白色/8", quantity: 5 }
+            ], plan_code: "PN20250430001" },
+            "CD250423000012": { skus: [
+                { fnsku: "X001P53RTS", chinese_sku: "ST1839/白色/7", quantity: 6 },
+                { fnsku: "X001T47PS7", chinese_sku: "ST1839/灰色/7", quantity: 6 },
+                { fnsku: "X001P58RN9", chinese_sku: "ST1839/白色/9", quantity: 6 }
+            ], plan_code: "PN20250430002" }
+        };
+
+        // 箱码输入框事件监听
+        document.getElementById('boxCodeInput').addEventListener('keypress', function(e) {
+            if (e.key !== 'Enter') return;
+            
+            const boxCode = e.target.value.trim();
+            e.target.value = ''; // 清空输入框
+            
+            // 新增：校验箱码是否有关联单据
+            if ((boxCode === 'CD250423000011' && boxSkuData['CD250423000011'].plan_code) ||
+                (boxCode === 'CD250423000012' && boxSkuData['CD250423000012'].plan_code)) {
+                const planCode = boxSkuData[boxCode].plan_code;
+                showAlert(`此箱已被单据${planCode}绑定，不能重复使用`);
+                return;
+            }
+
+            // 先判断箱码是否存在
+            if (boxSkuData[boxCode] === undefined) {
+                showAlert('箱码不存在');
+                return;
+            }
+
+            // 判断箱内是否为空
+            let boxSkus = Array.isArray(boxSkuData[boxCode]) ? boxSkuData[boxCode] : boxSkuData[boxCode].skus;
+            if (!boxSkus || boxSkus.length === 0) {
+                showAlert('箱内为空');
+                return;
+            }
+
+            // 新增：判断箱子是否已扫描过
+            if (scannedBoxCodes.includes(boxCode)) {
+                showAlert('该箱已扫描，不可重复使用');
+                return;
+            }
+
+            // 验证箱子内的SKU是否属于当前采购单
+            const validSkus = currentPurchaseOrder.purchase_order_pending_arrival_detail.map(item => item.fnsku);
+            const invalidSkus = boxSkus.filter(item => !validSkus.includes(item.fnsku));
+            
+            if (invalidSkus.length > 0) {
+                const invalidSkuList = invalidSkus.map(item => `${item.fnsku}(${item.chinese_sku})`).join('、');
+                showAlert(`箱内含有不属于该采购单的SKU：${invalidSkuList}`);
+                return;
+            }
+
+            // 检查添加箱内数量是否会超出待到货数量
+            let exceededSkus = [];
+            boxSkus.forEach(boxItem => {
+                const pendingItem = currentPurchaseOrder.purchase_order_pending_arrival_detail.find(
+                    detail => detail.fnsku === boxItem.fnsku
+                );
+                if (pendingItem) {
+                    const currentScanned = scannedItems[boxItem.fnsku]?.quantity || 0;
+                    const newTotal = currentScanned + boxItem.quantity;
+                    if (newTotal > parseInt(pendingItem.purchase_order_pending_arrival_quantity)) {
+                        exceededSkus.push({
+                            fnsku: boxItem.fnsku,
+                            chinese_sku: boxItem.chinese_sku,
+                            exceed: newTotal - parseInt(pendingItem.purchase_order_pending_arrival_quantity)
+                        });
+                    }
+                }
+            });
+
+            if (exceededSkus.length > 0) {
+                const exceededSkuList = exceededSkus.map(item => 
+                    `${item.fnsku}(${item.chinese_sku})超出${item.exceed}双`
+                ).join('；');
+                showAlert(`以下SKU数量超出待到货数量：${exceededSkuList}`);
+                return;
+            }
+
+            // 所有验证通过后，更新当前箱码和扫描数据
+            currentBoxCode = boxCode;
+            scannedBoxCodes.push(boxCode); // 将箱码添加到已扫描数组
+            document.getElementById('currentBoxCode').textContent = boxCode;
+            document.getElementById('scannedBoxCount').textContent = scannedBoxCodes.length;
+
+            // 更新已扫描的SKU
+            boxSkus.forEach(item => {
+                if (!scannedItems[item.fnsku]) {
+                    scannedItems[item.fnsku] = {
+                        chinese_sku: item.chinese_sku,
+                        quantity: 0
+                    };
+                }
+                scannedItems[item.fnsku].quantity += item.quantity;
+            });
+
+            updateSkuList();
+            updateQuantityInfo();
+        });
+    </script>
+</body>
+</html> 

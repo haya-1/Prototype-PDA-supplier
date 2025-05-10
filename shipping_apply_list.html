@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发货申请</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .filter-area {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .filter-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .list-area {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .list-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .list-item:hover {
+            background-color: #f9f9f9;
+        }
+        .list-item-left {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .list-item-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+        }
+        .purchase-code {
+            font-weight: bold;
+            color: #333;
+        }
+        .spu {
+            color: #666;
+        }
+        .delivery-time {
+            color: #888;
+            font-size: 14px;
+        }
+        .quantity {
+            font-weight: bold;
+            color: #333;
+        }
+        .pending-quantity {
+            color: #dc3545;
+        }
+        .alert-text {
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .back-button {
+            position: fixed;
+            top: 10px;
+            left: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #333;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+        }
+        .back-button:before {
+            content: "<";
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="history.back()"></button>
+    <div class="container">
+        <div class="header">
+            <h1>发货申请</h1>
+        </div>
+        <div class="filter-area">
+            <input type="text" class="filter-input" id="purchaseOrderFilter" placeholder="请输入采购单号筛选">
+        </div>
+        <div class="list-area" id="purchaseOrderList">
+            <!-- 示例数据 -->
+            <div class="list-item" onclick="location.href='shipping_apply_detail.html?code=PO202404230001'">
+                <div class="list-item-left">
+                    <div class="purchase-code">PO202404230001</div>
+                    <div class="spu">ST1839</div>
+                    <div class="delivery-time">预计到货时间：2024-04-25</div>
+                </div>
+                <div class="list-item-right">
+                    <div class="quantity">下单总数：100</div>
+                    <div class="pending-quantity">待到货数：50</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟采购单数据
+        const purchaseOrders = [
+            {
+                purchase_order_code: "ST20250423001",
+                spu: "ST1839",
+                purchase_order_expected_delivery_time: "2025-04-23",
+                purchase_order_total_quantity: "4068",
+                purchase_order_pending_arrival_quantity: "70"
+            },
+            {
+                purchase_order_code: "ST20250423002",
+                spu: "ST1839",
+                purchase_order_expected_delivery_time: "2025-04-24",
+                purchase_order_total_quantity: "5068",
+                purchase_order_pending_arrival_quantity: "108"
+            },
+            {
+                purchase_order_code: "ST20250423003",
+                spu: "ST1839",
+                purchase_order_expected_delivery_time: "2025-07-01",
+                purchase_order_total_quantity: "5090",
+                purchase_order_pending_arrival_quantity: "5090"
+            }
+        ];
+
+        // 渲染采购单列表
+        function renderPurchaseOrderList(orders) {
+            // 从 sessionStorage 获取临时更新的数据
+            const tempUpdatedData = JSON.parse(sessionStorage.getItem('tempUpdatedData') || '{}');
+
+            const listArea = document.getElementById('purchaseOrderList');
+            listArea.innerHTML = orders.map(order => {
+                // 如果有临时数据，使用临时数据中的待到货量
+                const pendingQuantity = tempUpdatedData[order.purchase_order_code]
+                    ? tempUpdatedData[order.purchase_order_code].pending_quantity
+                    : order.purchase_order_pending_arrival_quantity;
+
+                return `
+                    <div class="list-item" onclick="location.href='shipping_apply_detail.html?code=${order.purchase_order_code}'">
+                        <div class="list-item-left">
+                            <div class="purchase-code">${order.purchase_order_code}</div>
+                            <div class="spu">${order.spu}</div>
+                            <div class="delivery-time">预计到货时间：${order.purchase_order_expected_delivery_time}</div>
+                        </div>
+                        <div class="list-item-right">
+                            <div class="quantity">下单总数：${order.purchase_order_total_quantity}</div>
+                            <div class="pending-quantity">待到货数：${pendingQuantity}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 初始化列表
+        renderPurchaseOrderList(purchaseOrders);
+
+        // 采购单筛选功能
+        document.getElementById('purchaseOrderFilter').addEventListener('input', function(e) {
+            const filterValue = e.target.value.toLowerCase();
+            const filteredOrders = purchaseOrders.filter(order => 
+                order.purchase_order_code.toLowerCase().includes(filterValue)
+            );
+            renderPurchaseOrderList(filteredOrders);
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发货装箱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            padding-bottom: 90px;
+            margin: 0;
+            min-height: 100vh;
+            position: relative;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            font-size: 21px;
+            color: #333;
+        }
+        .scan-area {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .scan-group {
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .scan-label {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 0px;
+        }
+        .scan-input {
+            width: 100%;
+            padding: 10px;
+            padding-right: 40px;
+            font-size: 18px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .clear-input {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            display: none;
+            background: #fff;
+            border: none;
+            padding: 0;
+            color: #999;
+        }
+        .clear-input::before,
+        .clear-input::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 16px;
+            background-color: currentColor;
+            top: 50%;
+            left: 50%;
+        }
+        .clear-input::before {
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+        .clear-input::after {
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+        .scan-input:not(:placeholder-shown) + .clear-input {
+            display: block;
+        }
+        .error-text {
+            color: #dc3545;
+        }
+        .list-area {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .list-header {
+            display: grid;
+            grid-template-columns: 2fr 2fr 80px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+        .list-item {
+            display: grid;
+            grid-template-columns: 2fr 2fr 80px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .list-header > div,
+        .list-item > div {
+            padding: 0 10px;
+        }
+        .list-header > div:last-child,
+        .list-item > div:last-child {
+            text-align: center;
+        }
+        .button-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 15px 20px; 
+            background-color: #f5f5f5;
+            z-index: 100;
+        }
+        .button {
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .clear-button {
+            background-color: #e04b31;
+            color: #fff;
+        }
+        .confirm-button {
+            background-color: #1d87ea;
+            color: #fff;
+        }
+        .alert-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .alert-content {
+            background-color: #333;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            color: #fff;
+            width: 200px;
+            position: relative;
+        }
+        .alert-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: #333;
+        }
+        .alert-text {
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .back-button {
+            position: fixed;
+            top: 10px;
+            left: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #333;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+        }
+        .back-button:before {
+            content: "<";
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="history.back()"></button>
+    <div class="container">
+        <div class="header">
+            <h1>发货装箱</h1>
+        </div>
+        <div class="scan-area">
+            <div class="scan-group">
+                <input type="text" class="scan-input" id="boxCodeInput" placeholder="请扫描箱码">
+                <button class="clear-input" onclick="clearInput('boxCodeInput')"></button>
+            </div>
+            <div class="scan-group">
+                <input type="text" class="scan-input" id="skuInput" placeholder="请扫描鞋子条码">
+                <button class="clear-input" onclick="clearInput('skuInput')"></button>
+            </div>
+        </div>
+        <div class="list-area">
+            <div class="list-header">
+                <div>条码</div>
+                <div>货号/颜色/尺码</div>
+                <div>数量</div>
+            </div>
+        </div>
+        <div class="button-area">
+            <button class="button clear-button disabled" id="clearButton">清空已扫条码</button>
+            <button class="button confirm-button disabled" id="confirmButton">确认装箱</button>
+        </div>
+    </div>
+
+    <div class="alert-overlay" id="alertOverlay">
+        <div class="alert-content">
+            <div class="alert-icon">!</div>
+            <div class="alert-text">请使用空箱</div>
+        </div>
+    </div>
+
+    <script>
+        // 存储扫描的商品数据
+        let scannedItems = {};
+        let currentBoxCode = '';
+        let skuData = [
+            {
+                "fnsku": "X001P67ABJ",
+                "chinese_sku": "ST1839/灰色/8"
+            },
+            {
+                "fnsku": "X001P58RN9",
+                "chinese_sku": "ST1839/白色/9"
+            },
+            {
+                "fnsku": "X001P59JSB",
+                "chinese_sku": "ST1839/灰白/9"
+            }
+        ];
+        let boxData = {
+            "boxes": [
+                {
+                    "box_code": "CD250423000001",
+                    "is_empty": true
+                },
+                {
+                    "box_code": "CD250423000002",
+                    "is_empty": false
+                },
+                {
+                    "box_code": "CD250423000003",
+                    "is_empty": true
+                },
+                {
+                    "box_code": "CD250423000004",
+                    "is_empty": false
+                }
+            ]
+        };
+
+        function validateBoxCode(code) {
+            // 检查箱码格式：CD + 日期(6位YYMMDD) + 序号(6位)
+            const regex = /^CD\d{12}$/;
+            if (!regex.test(code)) {
+                return false;
+            }
+
+            // 提取日期部分 YYMMDD
+            const dateStr = code.substring(2, 8);
+            const year = 2000 + parseInt(dateStr.substring(0, 2)); // 假设年份在2000-2099之间
+            const month = parseInt(dateStr.substring(2, 4));
+            const day = parseInt(dateStr.substring(4, 6));
+
+            // 检查日期是否有效
+            const date = new Date(year, month - 1, day); // 月份从0开始，所以要减1
+            return date.getFullYear() === year && 
+                   date.getMonth() === month - 1 && 
+                   date.getDate() === day &&
+                   month >= 1 && month <= 12 && // 确保月份在1-12之间
+                   day >= 1 && day <= 31; // 简单的日期检查
+        }
+
+        function isEmptyBox(boxCode) {
+            const box = boxData.boxes.find(box => box.box_code === boxCode);
+            return box ? box.is_empty : false;
+        }
+
+        function showAlert(message) {
+            const overlay = document.getElementById('alertOverlay');
+            const alertText = overlay.querySelector('.alert-text');
+            alertText.textContent = message;
+            overlay.style.display = 'flex';
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 1000);
+        }
+
+        function findChineseSku(fnsku) {
+            console.log('Finding SKU for:', fnsku);
+            const item = skuData.find(item => item.fnsku === fnsku);
+            console.log('Found item:', item);
+            return item ? item.chinese_sku : null;
+        }
+
+        function clearInput(inputId) {
+            const input = document.getElementById(inputId);
+            input.value = '';
+            if (inputId === 'boxCodeInput') {
+                currentBoxCode = '';
+            }
+        }
+
+        function updateList() {
+            console.log('Updating list with items:', scannedItems);
+            const listArea = document.querySelector('.list-area');
+            // 保留表头
+            listArea.innerHTML = `
+                <div class="list-header">
+                    <div>条码</div>
+                    <div>货号/颜色/尺码</div>
+                    <div>数量</div>
+                </div>
+            `;
+
+            // 添加所有扫描的商品
+            Object.entries(scannedItems).forEach(([fnsku, data]) => {
+                const listItem = document.createElement('div');
+                listItem.className = 'list-item';
+                const skuDisplay = data.chineseSku || '<span class="error-text">错误数据</span>';
+                listItem.innerHTML = `
+                    <div>${fnsku}</div>
+                    <div style="text-align: left">${skuDisplay}</div>
+                    <div>${data.quantity}</div>
+                `;
+                listArea.appendChild(listItem);
+            });
+        }
+
+        // 更新按钮状态
+        function updateButtonState() {
+            const clearButton = document.getElementById('clearButton');
+            const confirmButton = document.getElementById('confirmButton');
+            const hasItems = Object.keys(scannedItems).length > 0;
+            
+            if (!currentBoxCode || !hasItems) {
+                clearButton.classList.add('disabled');
+                confirmButton.classList.add('disabled');
+            } else {
+                clearButton.classList.remove('disabled');
+                confirmButton.classList.remove('disabled');
+            }
+        }
+
+        // 清空条码按钮事件
+        document.querySelector('.clear-button').addEventListener('click', function() {
+            if (this.classList.contains('disabled')) return;
+            scannedItems = {};
+            updateList();
+            updateButtonState();
+        });
+
+        // 确认装箱按钮事件
+        document.querySelector('.confirm-button').addEventListener('click', function() {
+            if (this.classList.contains('disabled')) return;
+            
+            // if (Object.keys(scannedItems).length === 0) {
+            //     showAlert('请先扫描商品');
+            //     return;
+            // }
+
+            // 检查是否存在错误数据
+            const hasErrorData = Object.values(scannedItems).some(item => !item.chineseSku);
+            if (hasErrorData) {
+                showAlert('列表中存在错误数据，请检查');
+                return;
+            }
+
+            showAlert('装箱成功');
+            scannedItems = {};
+            currentBoxCode = '';
+            document.getElementById('boxCodeInput').value = '';
+            updateList();
+            updateButtonState();
+        });
+
+        // 箱码输入框事件监听
+        document.getElementById('boxCodeInput').addEventListener('keypress', function(e) {
+            if (e.key !== 'Enter') return;
+            
+            const boxCode = e.target.value.trim();
+            console.log('Box code scanned:', boxCode);
+            
+            // 检查箱码是否在boxData中存在
+            const boxExists = boxData.boxes.some(box => box.box_code === boxCode);
+            if (!boxExists) {
+                showAlert('箱码不存在');
+                e.target.value = ''; // 清空输入
+                return;
+            }
+
+            // 检查箱子是否为空
+            if (!isEmptyBox(boxCode)) {
+                showAlert('请使用空箱');
+                e.target.value = ''; // 清空输入
+                currentBoxCode = ''; // 确保清空当前箱码
+                updateButtonState();
+                return;
+            }
+
+            // 箱码验证通过，设置当前箱码
+            currentBoxCode = boxCode;
+            console.log('Current box code set to:', currentBoxCode);
+            updateButtonState();
+        });
+
+        // 鞋码输入框事件监听
+        document.getElementById('skuInput').addEventListener('change', function(e) {
+            const fnsku = e.target.value.trim();
+            console.log('SKU scanned:', fnsku);
+            console.log('Current box code:', currentBoxCode);
+
+            if (!currentBoxCode) {
+                showAlert('请先扫描箱码');
+                e.target.value = '';
+                return;
+            }
+
+            const chineseSku = findChineseSku(fnsku);
+            console.log('Found Chinese SKU:', chineseSku);
+
+            // 更新或添加商品数量，即使找不到对应的中文SKU也添加到列表
+            if (scannedItems[fnsku]) {
+                scannedItems[fnsku].quantity += 1;
+            } else {
+                scannedItems[fnsku] = {
+                    chineseSku: chineseSku,
+                    quantity: 1
+                };
+            }
+
+            console.log('Updated scanned items:', scannedItems);
+            // 更新显示
+            updateList();
+            updateButtonState();
+            e.target.value = '';
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>箱子清空</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            padding-bottom: 90px;
+            margin: 0;
+            min-height: 100vh;
+            position: relative;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        .scan-area {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .scan-group {
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .scan-input {
+            width: 100%;
+            padding: 10px;
+            padding-right: 40px;
+            font-size: 18px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .clear-input {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            display: none;
+            background: #fff;
+            border: none;
+            padding: 0;
+            color: #999;
+        }
+        .clear-input::before,
+        .clear-input::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 16px;
+            background-color: currentColor;
+            top: 50%;
+            left: 50%;
+        }
+        .clear-input::before {
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+        .clear-input::after {
+            transform: translate(-50%, -50%) rotate(-45deg);
+        }
+        .scan-input:not(:placeholder-shown) + .clear-input {
+            display: block;
+        }
+        .list-area {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .list-header {
+            display: grid;
+            grid-template-columns: 2fr 2fr 80px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+        .list-item {
+            display: grid;
+            grid-template-columns: 2fr 2fr 80px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .list-header > div,
+        .list-item > div {
+            padding: 0 10px;
+        }
+        .list-header > div:last-child,
+        .list-item > div:last-child {
+            text-align: center;
+        }
+        .button-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 15px 20px;
+            background-color: #f5f5f5;
+            z-index: 100;
+        }
+        .button {
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .confirm-button {
+            background-color: #1d87ea;
+            color: #fff;
+        }
+        .alert-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .alert-content {
+            background-color: #333;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            color: #fff;
+            width: 200px;
+            position: relative;
+        }
+        .alert-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: #333;
+        }
+        .alert-text {
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        .back-button {
+            position: fixed;
+            top: 10px;
+            left: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #333;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+        }
+        .back-button:before {
+            content: "<";
+            font-size: 18px;
+        }
+        .modal-content {
+            font-size: 16px;
+            color: #444;
+            margin-bottom: 24px;
+            text-align: left;
+            padding-left: 16px;
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="history.back()"></button>
+    <div class="container">
+        <div class="header">
+            <h1>箱子清空</h1>
+        </div>
+        <div class="scan-area">
+            <div class="scan-group">
+                <input type="text" class="scan-input" id="boxCodeInput" placeholder="请扫描箱码">
+                <button class="clear-input" onclick="clearInput('boxCodeInput')"></button>
+            </div>
+        </div>
+        <div class="list-area">
+            <div class="list-header">
+                <div>条码</div>
+                <div>货号/颜色/尺码</div>
+                <div>数量</div>
+            </div>
+        </div>
+        <div class="button-area">
+            <button class="button confirm-button disabled" id="confirmButton">确认清空</button>
+        </div>
+    </div>
+    <div class="alert-overlay" id="alertOverlay">
+        <div class="alert-content">
+            <div class="alert-icon">!</div>
+            <div class="alert-text"></div>
+        </div>
+    </div>
+
+    <script>
+        // 硬编码 SKU 数据
+        const skuData = {
+            "boxcode": "CD250423000001",
+            "skudetail": [
+                {
+                    "fnsku": "X001P67ABJ",
+                    "chinese_sku": "ST1839/灰色/8",
+                    "quantity": 9
+                },
+                {
+                    "fnsku": "X001P58RN9",
+                    "chinese_sku": "ST1839/白色/9",
+                    "quantity": 8
+                },
+                {
+                    "fnsku": "X001P59JSB",
+                    "chinese_sku": "ST1839/灰白/9",
+                    "quantity": 1
+                }
+            ],
+           
+        };
+
+        // 模拟箱子数据
+        const boxData = {
+            "boxes": [
+                {
+                    "box_code": "CD250423000001",
+                    "is_empty": false,
+                    "plan_code": "" // 绑定单据
+                },
+                {
+                    "box_code": "CD250423000002",
+                    "is_empty": true
+                },
+                {
+                    "box_code": "CD250423000003",
+                    "is_empty": false,
+                    "plan_code": "PN20250428002" // 绑定单据
+                }
+            ]
+        };
+
+        function isEmptyBox(boxCode) {
+            const box = boxData.boxes.find(box => box.box_code === boxCode);
+            return box ? !box.is_empty : false;
+        }
+
+        function validateBoxCode(code) {
+            // 检查箱码格式：CD + 日期(6位YYMMDD) + 序号(6位)
+            const regex = /^CD\d{12}$/;
+            if (!regex.test(code)) {
+                return false;
+            }
+
+            // 提取日期部分 YYMMDD
+            const dateStr = code.substring(2, 8);
+            const year = 2000 + parseInt(dateStr.substring(0, 2)); // 假设年份在2000-2099之间
+            const month = parseInt(dateStr.substring(2, 4));
+            const day = parseInt(dateStr.substring(4, 6));
+
+            // 检查日期是否有效
+            const date = new Date(year, month - 1, day); // 月份从0开始，所以要减1
+            return date.getFullYear() === year && 
+                   date.getMonth() === month - 1 && 
+                   date.getDate() === day &&
+                   month >= 1 && month <= 12 && // 确保月份在1-12之间
+                   day >= 1 && day <= 31; // 简单的日期检查
+        }
+
+        function showAlert(message) {
+            const overlay = document.getElementById('alertOverlay');
+            const alertText = overlay.querySelector('.alert-text');
+            alertText.textContent = message;
+            overlay.style.display = 'flex';
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 1000);
+        }
+
+        function updateList(boxCode) {
+            const listArea = document.querySelector('.list-area');
+            // 保留表头
+            listArea.innerHTML = `
+                <div class="list-header">
+                    <div>条码</div>
+                    <div>货号/颜色/尺码</div>
+                    <div>数量</div>
+                </div>
+            `;
+
+            if (!skuData || skuData.boxcode !== boxCode) {
+                return;
+            }
+
+            // 添加所有商品
+            skuData.skudetail.forEach(item => {
+                const listItem = document.createElement('div');
+                listItem.className = 'list-item';
+                listItem.innerHTML = `
+                    <div>${item.fnsku}</div>
+                    <div style="text-align: left">${item.chinese_sku}</div>
+                    <div>${item.quantity}</div>
+                `;
+                listArea.appendChild(listItem);
+            });
+        }
+
+        let currentBoxCode = '';
+
+        // 更新按钮状态
+        function updateButtonState() {
+            const confirmButton = document.getElementById('confirmButton');
+            if (!currentBoxCode) {
+                confirmButton.classList.add('disabled');
+            } else {
+                confirmButton.classList.remove('disabled');
+            }
+        }
+
+        // 确认清空按钮事件
+        document.querySelector('.confirm-button').addEventListener('click', function() {
+            if (this.classList.contains('disabled')) return;
+            
+            const boxCode = document.getElementById('boxCodeInput').value.trim();
+            if (!boxCode) {
+                showAlert('请先扫描箱码');
+                return;
+            }
+            showAlert('清空成功');
+            document.getElementById('boxCodeInput').value = '';
+            currentBoxCode = '';
+            updateList(''); // 清空列表
+            updateButtonState();
+        });
+
+        // 箱码输入框事件监听
+        document.getElementById('boxCodeInput').addEventListener('keypress', function(e) {
+            if (e.key !== 'Enter') return;
+            
+            const boxCode = e.target.value.trim();
+            console.log('Box code scanned:', boxCode);
+            
+            if (!validateBoxCode(boxCode)) {
+                showAlert('箱码不存在');
+                e.target.value = ''; // 清空输入
+                currentBoxCode = '';
+                updateButtonState();
+                return;
+            }
+
+            // 校验箱码是否被入库计划绑定（查boxData）
+            const box = boxData.boxes.find(box => box.box_code === boxCode);
+            if (box && box.plan_code) {
+                showAlert(`此箱已被单据${box.plan_code}绑定，无法清空`);
+                e.target.value = '';
+                currentBoxCode = '';
+                updateButtonState();
+                return;
+            }
+
+            // 检查箱子是否为空
+            if (!isEmptyBox(boxCode)) {
+                showAlert('该箱为空箱，不能清空');
+                e.target.value = ''; // 清空输入
+                currentBoxCode = ''; // 确保清空当前箱码
+                updateButtonState();
+                return;
+            }
+
+            // 箱码验证通过，设置当前箱码
+            currentBoxCode = boxCode;
+            console.log('Current box code set to:', currentBoxCode);
+            updateButtonState();
+            
+            // 显示箱子内的商品列表
+            if (skuData.boxcode === boxCode) {
+                updateList(boxCode);
+            } else {
+                showAlert('箱码不存在');
+                e.target.value = '';
+                currentBoxCode = '';
+                updateButtonState();
+            }
+        });
+
+        function clearInput(inputId) {
+            const input = document.getElementById(inputId);
+            input.value = '';
+            if (inputId === 'boxCodeInput') {
+                currentBoxCode = '';
+                updateList(''); // 清空列表
+                updateButtonState();
+            }
+        }
+    </script>
+
+    
+</body>
+</html> 
