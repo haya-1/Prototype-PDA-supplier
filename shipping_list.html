@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>发货申请</title>
+    <title>发货装箱</title>
     <style>
         * {
             margin: 0;
@@ -88,10 +88,6 @@
         .pending-quantity {
             color: #dc3545;
         }
-        .alert-text {
-            font-size: 16px;
-            line-height: 1.4;
-        }
         .back-button {
             position: fixed;
             top: 10px;
@@ -120,24 +116,13 @@
     <button class="back-button" onclick="history.back()"></button>
     <div class="container">
         <div class="header">
-            <h1>发货申请</h1>
+            <h1>发货装箱</h1>
         </div>
         <div class="filter-area">
             <input type="text" class="filter-input" id="purchaseOrderFilter" placeholder="输入采购单号或货号查询">
         </div>
         <div class="list-area" id="purchaseOrderList">
-            <!-- 示例数据 -->
-            <div class="list-item" onclick="location.href='shipping_apply_detail.html?code=PO202404230001'">
-                <div class="list-item-left">
-                    <div class="purchase-code">PO202404230001</div>
-                    <div class="spu">ST1839</div>
-                    <div class="delivery-time">预计到货时间：2024-04-25</div>
-                </div>
-                <div class="list-item-right">
-                    <div class="quantity">下单总数：100</div>
-                    <div class="pending-quantity">待到货数：50</div>
-                </div>
-            </div>
+            <!-- 列表项将通过JavaScript动态生成 -->
         </div>
     </div>
 
@@ -169,30 +154,20 @@
 
         // 渲染采购单列表
         function renderPurchaseOrderList(orders) {
-            // 从 sessionStorage 获取临时更新的数据
-            const tempUpdatedData = JSON.parse(sessionStorage.getItem('tempUpdatedData') || '{}');
-
             const listArea = document.getElementById('purchaseOrderList');
-            listArea.innerHTML = orders.map(order => {
-                // 如果有临时数据，使用临时数据中的待到货量
-                const pendingQuantity = tempUpdatedData[order.purchase_order_code]
-                    ? tempUpdatedData[order.purchase_order_code].pending_quantity
-                    : order.purchase_order_pending_arrival_quantity;
-
-                return `
-                    <div class="list-item" onclick="location.href='shipping_apply_detail.html?code=${order.purchase_order_code}'">
-                        <div class="list-item-left">
-                            <div class="purchase-code">${order.purchase_order_code}</div>
-                            <div class="spu">${order.spu}</div>
-                            <div class="delivery-time">预计到货时间：${order.purchase_order_expected_delivery_time}</div>
-                        </div>
-                        <div class="list-item-right">
-                            <div class="quantity">下单总数：${order.purchase_order_total_quantity}</div>
-                            <div class="pending-quantity">待到货数：${pendingQuantity}</div>
-                        </div>
+            listArea.innerHTML = orders.map(order => `
+                <div class="list-item" onclick="location.href='shipping.html?code=${order.purchase_order_code}'">
+                    <div class="list-item-left">
+                        <div class="purchase-code">${order.purchase_order_code}</div>
+                        <div class="spu">货号：${order.spu}</div>
+                        <div class="delivery-time">预计到货时间：${order.purchase_order_expected_delivery_time}</div>
                     </div>
-                `;
-            }).join('');
+                    <div class="list-item-right">
+                        <div class="quantity">下单总数：${order.purchase_order_total_quantity}</div>
+                        <div class="pending-quantity">待到货数：${order.purchase_order_pending_arrival_quantity}</div>
+                    </div>
+                </div>
+            `).join('');
         }
 
         // 初始化列表

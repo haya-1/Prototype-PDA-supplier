@@ -55,6 +55,15 @@
             border: 1px solid #ddd;
             border-radius: 5px;
         }
+        .current-box-code {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            color: #666;
+        }
         .clear-input {
             position: absolute;
             right: 10px;
@@ -86,7 +95,7 @@
             transform: translate(-50%, -50%) rotate(-45deg);
         }
         .scan-input:not(:placeholder-shown) + .clear-input {
-            display: block;
+            display: none;
         }
         .error-text {
             color: #dc3545;
@@ -225,6 +234,9 @@
                 <input type="text" class="scan-input" id="boxCodeInput" placeholder="请扫描箱码">
                 <button class="clear-input" onclick="clearInput('boxCodeInput')"></button>
             </div>
+            <div class="scan-group" id="currentBoxCodeGroup" style="display: none;">
+                <div class="current-box-code">当前箱码：<span id="currentBoxCodeDisplay"></span></div>
+            </div>
             <div class="scan-group">
                 <input type="text" class="scan-input" id="skuInput" placeholder="请扫描鞋子条码">
                 <button class="clear-input" onclick="clearInput('skuInput')"></button>
@@ -238,7 +250,7 @@
             </div>
         </div>
         <div class="button-area">
-            <button class="button clear-button disabled" id="clearButton">清空已扫条码</button>
+            <button class="button clear-button disabled" id="clearButton">清空页面</button>
             <button class="button confirm-button disabled" id="confirmButton">确认装箱</button>
         </div>
     </div>
@@ -374,43 +386,33 @@
             const confirmButton = document.getElementById('confirmButton');
             const hasItems = Object.keys(scannedItems).length > 0;
             
-            if (!currentBoxCode || !hasItems) {
+            if (!currentBoxCode) {
                 clearButton.classList.add('disabled');
                 confirmButton.classList.add('disabled');
             } else {
                 clearButton.classList.remove('disabled');
-                confirmButton.classList.remove('disabled');
+                if (hasItems) {
+                    confirmButton.classList.remove('disabled');
+                } else {
+                    confirmButton.classList.add('disabled');
+                }
             }
         }
 
-        // 清空条码按钮事件
+        // 清空页面按钮事件
         document.querySelector('.clear-button').addEventListener('click', function() {
             if (this.classList.contains('disabled')) return;
-            scannedItems = {};
-            updateList();
-            updateButtonState();
-        });
-
-        // 确认装箱按钮事件
-        document.querySelector('.confirm-button').addEventListener('click', function() {
-            if (this.classList.contains('disabled')) return;
             
-            // if (Object.keys(scannedItems).length === 0) {
-            //     showAlert('请先扫描商品');
-            //     return;
-            // }
-
-            // 检查是否存在错误数据
-            const hasErrorData = Object.values(scannedItems).some(item => !item.chineseSku);
-            if (hasErrorData) {
-                showAlert('列表中存在错误数据，请检查');
-                return;
-            }
-
-            showAlert('装箱成功');
+            // 清空所有数据
             scannedItems = {};
             currentBoxCode = '';
+            
+            // 恢复箱码输入框
             document.getElementById('boxCodeInput').value = '';
+            document.getElementById('boxCodeInput').style.display = 'block';
+            document.getElementById('currentBoxCodeGroup').style.display = 'none';
+            
+            // 清空SKU列表
             updateList();
             updateButtonState();
         });
@@ -434,14 +436,18 @@
             if (!isEmptyBox(boxCode)) {
                 showAlert('请使用空箱');
                 e.target.value = ''; // 清空输入
-                currentBoxCode = ''; // 确保清空当前箱码
-                updateButtonState();
                 return;
             }
 
             // 箱码验证通过，设置当前箱码
             currentBoxCode = boxCode;
             console.log('Current box code set to:', currentBoxCode);
+            
+            // 隐藏输入框，显示当前箱码
+            e.target.style.display = 'none';
+            document.getElementById('currentBoxCodeGroup').style.display = 'block';
+            document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
+            
             updateButtonState();
         });
 
@@ -451,7 +457,8 @@
             console.log('SKU scanned:', fnsku);
             console.log('Current box code:', currentBoxCode);
 
-            if (!currentBoxCode) {
+            // 检查是否已扫描箱码
+            if (!currentBoxCode || document.getElementById('boxCodeInput').style.display !== 'none') {
                 showAlert('请先扫描箱码');
                 e.target.value = '';
                 return;
@@ -460,7 +467,13 @@
             const chineseSku = findChineseSku(fnsku);
             console.log('Found Chinese SKU:', chineseSku);
 
-            // 更新或添加商品数量，即使找不到对应的中文SKU也添加到列表
+            if (!chineseSku) {
+                showAlert('条码不属于当前采购单');
+                e.target.value = '';
+                return;
+            }
+
+            // 更新或添加商品数量
             if (scannedItems[fnsku]) {
                 scannedItems[fnsku].quantity += 1;
             } else {
@@ -475,6 +488,39 @@
             updateList();
             updateButtonState();
             e.target.value = '';
+        });
+
+        // 确认装箱按钮事件
+        document.querySelector('.confirm-button').addEventListener('click', function() {
+            if (this.classList.contains('disabled')) return;
+            
+            // 检查是否已扫描箱码
+            // if (!currentBoxCode || document.getElementById('boxCodeInput').style.display !== 'none') {
+            //     showAlert('请先扫描箱码');
+            //     return;
+            // }
+
+            // // 检查是否有扫描的商品
+            // if (Object.keys(scannedItems).length === 0) {
+            //     showAlert('请先扫描商品');
+            //     return;
+            // }
+
+            // 检查是否存在错误数据
+            // const hasErrorData = Object.values(scannedItems).some(item => !item.chineseSku);
+            // if (hasErrorData) {
+            //     showAlert('列表中存在错误数据，请检查');
+            //     return;
+            // }
+
+            showAlert('装箱成功');
+            scannedItems = {};
+            currentBoxCode = '';
+            document.getElementById('boxCodeInput').value = '';
+            document.getElementById('boxCodeInput').style.display = 'block';
+            document.getElementById('currentBoxCodeGroup').style.display = 'none';
+            updateList();
+            updateButtonState();
         });
     </script>
 </body>

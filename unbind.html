@@ -44,11 +44,21 @@
         }
         .scan-input {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             padding-right: 40px;
             font-size: 18px;
             border: 1px solid #ddd;
             border-radius: 5px;
+            
+        }
+        .current-box-code {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            color: #666;
         }
         .clear-input {
             position: absolute;
@@ -81,7 +91,7 @@
             transform: translate(-50%, -50%) rotate(-45deg);
         }
         .scan-input:not(:placeholder-shown) + .clear-input {
-            display: block;
+            display: none; /* 隐藏箱码输入框的叉号 */
         }
         .list-area {
             background-color: #fff;
@@ -112,16 +122,16 @@
             text-align: center;
         }
         .button-area {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
             position: fixed;
             bottom: 0;
             left: 0;
-            width: 100%;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            padding: 15px 20px;
             background-color: #f5f5f5;
             z-index: 100;
+            padding: 15px 20px;
         }
         .button {
             padding: 15px;
@@ -132,6 +142,14 @@
             text-align: center;
         }
         .button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .change-button {
+            background-color: #e04b31;
+            color: #fff;
+        }
+        .change-button.disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
@@ -216,7 +234,10 @@
         <div class="scan-area">
             <div class="scan-group">
                 <input type="text" class="scan-input" id="boxCodeInput" placeholder="请扫描箱码">
-                <button class="clear-input" onclick="clearInput('boxCodeInput')"></button>
+                <button class="clear-input" onclick="clearBoxInput()"></button>
+            </div>
+            <div class="scan-group" id="currentBoxCodeGroup" style="display: none;">
+                <div class="current-box-code">当前箱码：<span id="currentBoxCodeDisplay"></span></div>
             </div>
         </div>
         <div class="list-area">
@@ -227,7 +248,8 @@
             </div>
         </div>
         <div class="button-area">
-            <button class="button confirm-button disabled" id="confirmButton">确认清空</button>
+            <button class="button change-button disabled" id="changeButton" onclick="handleChangeBox()">更换箱码</button>
+            <button class="button confirm-button disabled" id="confirmButton" onclick="handleConfirmUnbind()">确认清空</button>
         </div>
     </div>
     <div class="alert-overlay" id="alertOverlay">
@@ -352,10 +374,15 @@
         // 更新按钮状态
         function updateButtonState() {
             const confirmButton = document.getElementById('confirmButton');
+            const changeButton = document.getElementById('changeButton');
             if (!currentBoxCode) {
                 confirmButton.classList.add('disabled');
+                changeButton.classList.add('disabled');
+                document.getElementById('boxCodeInput').style.display = 'block';
+                document.getElementById('currentBoxCodeGroup').style.display = 'none';
             } else {
                 confirmButton.classList.remove('disabled');
+                changeButton.classList.remove('disabled');
             }
         }
 
@@ -382,18 +409,10 @@
             const boxCode = e.target.value.trim();
             console.log('Box code scanned:', boxCode);
             
-            if (!validateBoxCode(boxCode)) {
-                showAlert('箱码不存在');
-                e.target.value = ''; // 清空输入
-                currentBoxCode = '';
-                updateButtonState();
-                return;
-            }
-
-            // 校验箱码是否被入库计划绑定（查boxData）
+            // 检查箱码是否存在
             const box = boxData.boxes.find(box => box.box_code === boxCode);
-            if (box && box.plan_code) {
-                showAlert(`此箱已被单据${box.plan_code}绑定，无法清空`);
+            if (!box) {
+                showAlert('箱码不存在');
                 e.target.value = '';
                 currentBoxCode = '';
                 updateButtonState();
@@ -401,10 +420,19 @@
             }
 
             // 检查箱子是否为空
-            if (!isEmptyBox(boxCode)) {
+            if (box.is_empty) {
                 showAlert('该箱为空箱，不能清空');
-                e.target.value = ''; // 清空输入
-                currentBoxCode = ''; // 确保清空当前箱码
+                e.target.value = '';
+                currentBoxCode = '';
+                updateButtonState();
+                return;
+            }
+
+            // 检查是否绑定入库计划
+            if (box.plan_code) {
+                showAlert(`此箱已被单据${box.plan_code}绑定，无法清空`);
+                e.target.value = '';
+                currentBoxCode = '';
                 updateButtonState();
                 return;
             }
@@ -412,6 +440,12 @@
             // 箱码验证通过，设置当前箱码
             currentBoxCode = boxCode;
             console.log('Current box code set to:', currentBoxCode);
+            
+            // 隐藏输入框，显示当前箱码
+            e.target.style.display = 'none';
+            document.getElementById('currentBoxCodeGroup').style.display = 'block';
+            document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
+            
             updateButtonState();
             
             // 显示箱子内的商品列表
@@ -422,17 +456,75 @@
                 e.target.value = '';
                 currentBoxCode = '';
                 updateButtonState();
+                // 恢复输入框显示
+                e.target.style.display = 'block';
+                document.getElementById('currentBoxCodeGroup').style.display = 'none';
             }
         });
 
-        function clearInput(inputId) {
-            const input = document.getElementById(inputId);
-            input.value = '';
-            if (inputId === 'boxCodeInput') {
-                currentBoxCode = '';
-                updateList(''); // 清空列表
-                updateButtonState();
-            }
+        // 清空箱码输入框
+        // function clearInput(inputId) {
+        //     const input = document.getElementById(inputId);
+        //     input.value = '';
+        //     if (inputId === 'boxCodeInput') {
+        //         currentBoxCode = '';
+        //         updateList(''); // 清空列表
+        //         updateButtonState();
+        //     }
+        // }
+
+        // 处理更换箱码
+        function handleChangeBox() {
+            if (document.getElementById('changeButton').classList.contains('disabled')) return;
+            
+            // 清空所有数据
+            // skuData.skudetail = [];
+            // skuData.boxcode = null;
+            
+            // 恢复箱码输入框
+            document.getElementById('boxCodeInput').value = '';
+            document.getElementById('boxCodeInput').style.display = 'block';
+            document.getElementById('currentBoxCodeGroup').style.display = 'none';
+            
+            // 清空SKU列表
+            updateList('');
+            document.getElementById('confirmButton').classList.add('disabled');
+            document.getElementById('confirmButton').disabled = true;
+            document.getElementById('changeButton').classList.add('disabled');
+        }
+
+        // 校验箱码是否属于当前入库计划
+        // function validateBoxCode(boxCode, planCode) {
+        //     setTimeout(() => {
+        //         // if (!boxData.boxes.some(box => box.box_code === boxCode && box.plan_code)) {
+        //         //     showAlert('箱码不属于该入库计划');
+        //         //     document.getElementById('confirmButton').classList.add('disabled');
+        //         //     document.getElementById('confirmButton').disabled = true;
+        //         //     document.getElementById('changeButton').classList.add('disabled');
+        //         //     clearInput('boxCodeInput');
+        //         //     return;
+        //         // }
+        //         // 校验通过，展示SKU列表
+        //         updateList(boxCode);
+        //         document.getElementById('confirmButton').classList.remove('disabled');
+        //         document.getElementById('confirmButton').disabled = false;
+        //         document.getElementById('changeButton').classList.remove('disabled');
+
+        //         // 隐藏输入框，显示当前箱码
+        //         document.getElementById('boxCodeInput').style.display = 'none';
+        //         document.getElementById('currentBoxCodeGroup').style.display = 'block';
+        //         document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
+        //     }, 300);
+        // }
+
+        // 清空箱码输入框和SKU列表
+        function clearBoxInput() {
+            document.getElementById('boxCodeInput').value = '';
+            currentBoxCode = '';
+            updateList('');
+            document.getElementById('confirmButton').classList.add('disabled');
+            document.getElementById('confirmButton').disabled = true;
+            document.getElementById('changeButton').classList.add('disabled');
         }
     </script>
 
