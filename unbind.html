@@ -382,6 +382,7 @@
                 document.getElementById('currentBoxCodeGroup').style.display = 'none';
             } else {
                 confirmButton.classList.remove('disabled');
+                // document.getElementById('confirmButton').disabled = false;
                 changeButton.classList.remove('disabled');
             }
         }
@@ -489,7 +490,7 @@
             // 清空SKU列表
             updateList('');
             document.getElementById('confirmButton').classList.add('disabled');
-            document.getElementById('confirmButton').disabled = true;
+            // document.getElementById('confirmButton').disabled = true;
             document.getElementById('changeButton').classList.add('disabled');
         }
 
