@@ -94,7 +94,7 @@
             transform: translate(-50%, -50%) rotate(-45deg);
         }
         .scan-input:not(:placeholder-shown) + .clear-input {
-            display: block;
+            display: none;
         }
         .scan-input {
             width: 100%;
@@ -102,6 +102,15 @@
             font-size: 18px;
             border: 1px solid #ddd;
             border-radius: 5px;
+        }
+        .current-box-code {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            color: #666;
         }
         .scan-input:disabled {
             background-color: #e0e0e0 !important;
@@ -314,6 +323,9 @@
                 <input type="text" class="scan-input" id="boxCodeInput" placeholder="请扫描箱码">
                 <button class="clear-input" onclick="clearBoxInput()"></button>
             </div>
+            <div class="scan-group" id="currentBoxCodeGroup" style="display: none;">
+                <div class="current-box-code">当前箱码：<span id="currentBoxCodeDisplay"></span></div>
+            </div>
             <div class="scan-group">
                 <input type="text" class="scan-input" id="skuInput" placeholder="请扫描鞋子条码">
             </div>
@@ -327,7 +339,7 @@
             <div id="skuList"></div>
         </div>
         <div class="button-area">
-            <button class="button clear-button disabled" onclick="clearScannedItems()">清空已扫条码</button>
+            <button class="button clear-button disabled" onclick="clearPage()">清空页面</button>
             <button class="button confirm-button disabled" onclick="confirmBox()">确认装箱</button>
         </div>
     </div>
@@ -410,14 +422,23 @@
         function updateButtonState() {
             const clearButton = document.querySelector('.clear-button');
             const confirmButton = document.querySelector('.confirm-button');
-            const hasItems = Object.keys(scannedItems).length > 0;
             
-            if (!hasItems) {
+            if (!currentBoxCode) {
                 clearButton.classList.add('disabled');
                 confirmButton.classList.add('disabled');
             } else {
                 clearButton.classList.remove('disabled');
-                confirmButton.classList.remove('disabled');
+                if (mode === 'repack') {
+                    // 重新装箱模式：需要有条码才能确认
+                    if (Object.keys(scannedItems).length > 0) {
+                        confirmButton.classList.remove('disabled');
+                    } else {
+                        confirmButton.classList.add('disabled');
+                    }
+                } else {
+                    // 新增箱子模式：有箱码就可以确认
+                    confirmButton.classList.remove('disabled');
+                }
             }
         }
 
@@ -493,12 +514,23 @@
             });
         }
 
-        document.querySelector('.clear-button').addEventListener('click', function() {
-            if (this.classList.contains('disabled')) return;
+        // 清空页面
+        function clearPage() {
+            if (document.querySelector('.clear-button').classList.contains('disabled')) return;
+            
+            // 清空所有数据
             scannedItems = {};
+            currentBoxCode = '';
+            
+            // 恢复箱码输入框
+            document.getElementById('boxCodeInput').value = '';
+            document.getElementById('boxCodeInput').style.display = 'block';
+            document.getElementById('currentBoxCodeGroup').style.display = 'none';
+            document.getElementById('skuInput').disabled = false;
+            // 清空SKU列表
             updateSkuList();
             updateButtonState();
-        });
+        }
 
         // 获取SKU的待到货量
         function getPendingQuantity(fnsku) {
@@ -560,6 +592,9 @@
             scannedItems = {};
             currentBoxCode = '';
             document.getElementById('boxCodeInput').value = '';
+            document.getElementById('boxCodeInput').style.display = 'block';
+            document.getElementById('currentBoxCodeGroup').style.display = 'none';
+            document.getElementById('skuInput').disabled = false;
             updateSkuList();
             updateButtonState();
         }
@@ -603,7 +638,12 @@
                     return;
                 }
                 currentBoxCode = boxCode;
-                document.getElementById('currentBoxCode').textContent = boxCode;
+                
+                // 隐藏输入框，显示当前箱码
+                e.target.style.display = 'none';
+                document.getElementById('currentBoxCodeGroup').style.display = 'block';
+                document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
+                
                 updateButtonState();
                 return;
             }
@@ -621,31 +661,53 @@
             if (!box.is_empty) {
                 // 非空箱且未绑定单据：显示SKU，禁用扫码和清空按钮，错误SKU用红色标注
                 currentBoxCode = boxCode;
-                document.getElementById('currentBoxCode').textContent = boxCode;
+                
+                // 隐藏输入框，显示当前箱码
+                e.target.style.display = 'none';
+                document.getElementById('currentBoxCodeGroup').style.display = 'block';
+                document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
+                
                 scannedItems = {};
+                let hasInvalidSku = false;
                 (box.skus || []).forEach(item => {
-                    let chineseSku;
                     if (!validateSku(item.fnsku)) {
-                        chineseSku = '<span style="color:#e04b31">不属于该采购单</span>';
-                    } else {
-                        chineseSku = item.chinese_sku;
+                        hasInvalidSku = true;
+                        return;
                     }
                     scannedItems[item.fnsku] = {
-                        chineseSku: chineseSku,
+                        chineseSku: item.chinese_sku,
                         quantity: item.quantity
                     };
                 });
+
+                if (hasInvalidSku) {
+                    showAlert('箱内存在条码不属于当前采购单，请检查');
+                    // 清空页面
+                    scannedItems = {};
+                    currentBoxCode = '';
+                    document.getElementById('boxCodeInput').value = '';
+                    document.getElementById('boxCodeInput').style.display = 'block';
+                    document.getElementById('currentBoxCodeGroup').style.display = 'none';
+                    document.getElementById('skuInput').disabled = false;
+                    updateSkuList();
+                    updateButtonState();
+                    return;
+                }
+
                 updateSkuList();
                 updateButtonState();
                 document.getElementById('skuInput').disabled = true;
-                const clearBtn = document.querySelector('.clear-button');
-                clearBtn.disabled = true;
-                clearBtn.classList.add('disabled');
                 return;
             }
             // 空箱且未绑定单据：允许扫码
             currentBoxCode = boxCode;
-            document.getElementById('currentBoxCode').textContent = boxCode;
+            
+            // 隐藏输入框，显示当前箱码
+            e.target.style.display = 'none';
+            document.getElementById('currentBoxCodeGroup').style.display = 'block';
+            document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
+            
+            
             scannedItems = {};
             updateSkuList();
             updateButtonState();
@@ -665,12 +727,14 @@
                 return;
             }
 
-            let chineseSku;
+            // 检查条码是否属于当前采购单
             if (!validateSku(fnsku)) {
-                chineseSku = '<span style="color:#e04b31">不属于该采购单</span>';
-            } else {
-                chineseSku = getChineseSku(fnsku);
+                showAlert('条码不属于当前采购单');
+                e.target.value = '';
+                return;
             }
+
+            const chineseSku = getChineseSku(fnsku);
             if (scannedItems[fnsku]) {
                 scannedItems[fnsku].quantity += 1;
             } else {
@@ -684,14 +748,14 @@
             e.target.value = '';
         });
 
-        // 清空箱码输入框和SKU列表
-        function clearBoxInput() {
-            document.getElementById('boxCodeInput').value = '';
-            currentBoxCode = '';
-            scannedItems = {};
-            updateSkuList();
-            updateButtonState();
-        }
+        // // 清空箱码输入框和SKU列表
+        // function clearBoxInput() {
+        //     document.getElementById('boxCodeInput').value = '';
+        //     currentBoxCode = '';
+        //     scannedItems = {};
+        //     updateSkuList();
+        //     updateButtonState();
+        // }
 
         // 页面加载时初始化
         window.onload = initPage;

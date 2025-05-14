@@ -46,6 +46,15 @@
             border: 1px solid #ddd;
             border-radius: 5px;
         }
+        .current-box-code {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            color: #666;
+        }
         .clear-input {
             position: absolute;
             right: 10px;
@@ -77,7 +86,7 @@
             transform: translate(-50%, -50%) rotate(-45deg);
         }
         .scan-input:not(:placeholder-shown) + .clear-input {
-            display: block;
+            display: none; /* 隐藏箱码输入框的叉号 */
         }
         .list-area {
             background-color: #fff;
@@ -166,6 +175,34 @@
             content: "<";
             font-size: 18px;
         }
+        .button-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 20px;
+            background-color: #f5f5f5;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+        }
+        .button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            width: 200px;
+        }
+        .button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .change-button {
+            background-color: #e04b31;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -179,6 +216,9 @@
                 <input type="text" class="scan-input" id="boxCodeInput" placeholder="请扫描箱码">
                 <button class="clear-input" onclick="clearInput('boxCodeInput')"></button>
             </div>
+            <div class="scan-group" id="currentBoxCodeGroup" style="display: none;">
+                <div class="current-box-code">当前箱码：<span id="currentBoxCodeDisplay"></span></div>
+            </div>
         </div>
         <div id="boxInfo" style="display:none; margin-bottom: 10px; background:#fff; border-radius:8px; padding:12px 20px; box-shadow:0 2px 5px rgba(0,0,0,0.06); font-size:16px;">
             <div style="margin-bottom:4px;">入库计划单号：<span id="planCodeText" style="font-weight:bold;"></span></div>
@@ -187,6 +227,9 @@
         <div class="list-area">
             <div class="list-header" style="display:none"></div>
             <div id="skuList"></div>
+        </div>
+        <div class="button-area">
+            <button class="button change-button disabled" id="changeButton" onclick="handleChangeBox()">更换箱码</button>
         </div>
     </div>
     <div class="alert-overlay" id="alertOverlay">
@@ -307,6 +350,25 @@
             });
         }
 
+        let currentBoxCode = '';
+
+        function handleChangeBox() {
+            if (document.getElementById('changeButton').classList.contains('disabled')) return;
+            
+            // 清空所有数据
+            currentBoxCode = '';
+            
+            // 恢复箱码输入框
+            document.getElementById('boxCodeInput').value = '';
+            document.getElementById('boxCodeInput').style.display = 'block';
+            document.getElementById('currentBoxCodeGroup').style.display = 'none';
+            
+            // 清空SKU列表
+            updateList('');
+            document.getElementById('boxInfo').style.display = 'none';
+            document.getElementById('changeButton').classList.add('disabled');
+        }
+
         document.getElementById('boxCodeInput').addEventListener('keypress', function(e) {
             if (e.key !== 'Enter') return;
             
@@ -320,6 +382,17 @@
             }
 
             if (skuData.boxcode === boxCode) {
+                // 设置当前箱码
+                currentBoxCode = boxCode;
+                
+                // 隐藏输入框，显示当前箱码
+                e.target.style.display = 'none';
+                document.getElementById('currentBoxCodeGroup').style.display = 'block';
+                document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
+                
+                // 启用更换箱码按钮
+                document.getElementById('changeButton').classList.remove('disabled');
+                
                 updateList(boxCode);
             } else {
                 showAlert('箱码不存在');

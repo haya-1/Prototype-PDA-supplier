@@ -4196,6 +4196,833 @@ _**User**_
 
 _**Assistant**_
 
+好的，我来修改装箱查询页面的这些功能：
+
+
+---
+
+```diff
+              border-radius: 5px;
+          }
++         .current-box-code {
++             width: 100%;
++             padding: 10px;
++             font-size: 18px;
++             border: 1px solid #ddd;
++             border-radius: 5px;
++             background-color: #f8f9fa;
++             color: #666;
++         }
+          .clear-input {
+              position: absolute;
+          }
+          .scan-input:not(:placeholder-shown) + .clear-input {
+-             display: block;
++             display: none; /* 隐藏箱码输入框的叉号 */
+          }
+          .list-area {
+              font-size: 18px;
+          }
++         .button-area {
++             position: fixed;
++             bottom: 0;
++             left: 0;
++             width: 100%;
++             padding: 15px 20px;
++             background-color: #f5f5f5;
++             z-index: 100;
++             display: flex;
++             justify-content: center;
++         }
++         .button {
++             padding: 15px 30px;
++             border: none;
++             border-radius: 5px;
++             font-size: 16px;
++             cursor: pointer;
++             text-align: center;
++             width: 200px;
++         }
++         .button.disabled {
++             opacity: 0.5;
++             cursor: not-allowed;
++         }
++         .change-button {
++             background-color: #e04b31;
++             color: #fff;
++         }
+      </style>
+  </head>
+                  <button class="clear-input" onclick="clearInput('boxCodeInput')"></button>
+              </div>
++             <div class="scan-group" id="currentBoxCodeGroup" style="display: none;">
++                 <div class="current-box-code">当前箱码：<span id="currentBoxCodeDisplay"></span></div>
++             </div>
+          </div>
+          <div id="boxInfo" style="display:none; margin-bottom: 10px; background:#fff; border-radius:8px; padding:12px 20px; box-shadow:0 2px 5px rgba(0,0,0,0.06); font-size:16px;">
+              <div id="skuList"></div>
+          </div>
++         <div class="button-area">
++             <button class="button change-button disabled" id="changeButton" onclick="handleChangeBox()">更换箱码</button>
++         </div>
+      </div>
+      <div class="alert-overlay" id="alertOverlay">
+              });
+          }
++ 
++         let currentBoxCode = '';
++ 
++         function handleChangeBox() {
++             if (document.getElementById('changeButton').classList.contains('disabled')) return;
++             
++             // 清空所有数据
++             currentBoxCode = '';
++             
++             // 恢复箱码输入框
++             document.getElementById('boxCodeInput').value = '';
++             document.getElementById('boxCodeInput').style.display = 'block';
++             document.getElementById('currentBoxCodeGroup').style.display = 'none';
++             
++             // 清空SKU列表
++             updateList('');
++             document.getElementById('boxInfo').style.display = 'none';
++             document.getElementById('changeButton').classList.add('disabled');
++         }
+  
+          document.getElementById('boxCodeInput').addEventListener('keypress', function(e) {
+  
+              if (skuData.boxcode === boxCode) {
++                 // 设置当前箱码
++                 currentBoxCode = boxCode;
++                 
++                 // 隐藏输入框，显示当前箱码
++                 e.target.style.display = 'none';
++                 document.getElementById('currentBoxCodeGroup').style.display = 'block';
++                 document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
++                 
++                 // 启用更换箱码按钮
++                 document.getElementById('changeButton').classList.remove('disabled');
++                 
+                  updateList(boxCode);
+              } else {
+```
+
+---
+
+我已经完成了以下修改：
+
+1. 添加了当前箱码显示区域：
+```html
+<div class="scan-group" id="currentBoxCodeGroup" style="display: none;">
+    <div class="current-box-code">当前箱码：<span id="currentBoxCodeDisplay"></span></div>
+</div>
+```
+
+2. 添加了"更换箱码"按钮：
+```html
+<div class="button-area">
+    <button class="button change-button disabled" id="changeButton" onclick="handleChangeBox()">更换箱码</button>
+</div>
+```
+
+3. 添加了相关样式：
+```css
+.button-area {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 15px 20px;
+    background-color: #f5f5f5;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+}
+.button {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: center;
+    width: 200px;
+}
+.change-button {
+    background-color: #e04b31;
+    color: #fff;
+}
+```
+
+4. 隐藏了箱码输入框的叉号：
+```css
+.scan-input:not(:placeholder-shown) + .clear-input {
+    display: none;
+}
+```
+
+5. 添加了更换箱码的处理函数：
+```javascript
+function handleChangeBox() {
+    if (document.getElementById('changeButton').classList.contains('disabled')) return;
+    
+    // 清空所有数据
+    currentBoxCode = '';
+    
+    // 恢复箱码输入框
+    document.getElementById('boxCodeInput').value = '';
+    document.getElementById('boxCodeInput').style.display = 'block';
+    document.getElementById('currentBoxCodeGroup').style.display = 'none';
+    
+    // 清空SKU列表
+    updateList('');
+    document.getElementById('boxInfo').style.display = 'none';
+    document.getElementById('changeButton').classList.add('disabled');
+}
+```
+
+6. 修改了箱码输入框的事件处理，在验证通过后：
+- 设置当前箱码
+- 隐藏输入框，显示当前箱码
+- 启用更换箱码按钮
+
+这样，当扫描箱码验证通过后，输入框会变成只读的当前箱码显示，并且可以通过"更换箱码"按钮重新开始。需要我做其他调整吗？
+
+---
+
+_**User**_
+
+发货修改-重新装箱：
+1、扫描箱码校验通过后，箱码输入框固定显示当前箱码，不允许修改（把箱码的输入框变为“当前箱码：{当前箱码}"）
+2、清空已扫条码改为清空页面，效果为清空当前箱码和SKU列表（记得恢复箱码输入框），按钮状态的变更条件修改为当前箱码是否为空
+3、条码校验结果为条码不存在时，不再添加数据到列表内，而是弹窗提醒”条码不属于当前采购单“
+4、隐藏箱码输入框的叉号
+
+---
+
+_**Assistant**_
+
+好的，我来修改发货修改-重新装箱页面的这些功能：
+
+
+---
+
+```diff
+          }
+          .scan-input:not(:placeholder-shown) + .clear-input {
+-             display: block;
++             display: none;
+          }
+          .scan-input {
+              border-radius: 5px;
+          }
++         .current-box-code {
++             width: 100%;
++             padding: 10px;
++             font-size: 18px;
++             border: 1px solid #ddd;
++             border-radius: 5px;
++             background-color: #f8f9fa;
++             color: #666;
++         }
+          .scan-input:disabled {
+              background-color: #e0e0e0 !important;
+                  <button class="clear-input" onclick="clearBoxInput()"></button>
+              </div>
++             <div class="scan-group" id="currentBoxCodeGroup" style="display: none;">
++                 <div class="current-box-code">当前箱码：<span id="currentBoxCodeDisplay"></span></div>
++             </div>
+              <div class="scan-group">
+                  <input type="text" class="scan-input" id="skuInput" placeholder="请扫描鞋子条码">
+          </div>
+          <div class="button-area">
+-             <button class="button clear-button disabled" onclick="clearScannedItems()">清空已扫条码</button>
++             <button class="button clear-button disabled" onclick="clearPage()">清空页面</button>
+              <button class="button confirm-button disabled" onclick="confirmBox()">确认装箱</button>
+          </div>
+              const clearButton = document.querySelector('.clear-button');
+              const confirmButton = document.querySelector('.confirm-button');
+-             const hasItems = Object.keys(scannedItems).length > 0;
+              
+-             if (!hasItems) {
++             if (!currentBoxCode) {
+                  clearButton.classList.add('disabled');
+                  confirmButton.classList.add('disabled');
+              } else {
+                  clearButton.classList.remove('disabled');
++                 if (Object.keys(scannedItems).length > 0) {
+                      confirmButton.classList.remove('disabled');
++                 } else {
++                     confirmButton.classList.add('disabled');
++                 }
+              }
+          }
+          }
+  
+-         document.querySelector('.clear-button').addEventListener('click', function() {
+-             if (this.classList.contains('disabled')) return;
++         // 清空页面
++         function clearPage() {
++             if (document.querySelector('.clear-button').classList.contains('disabled')) return;
++             
++             // 清空所有数据
+              scannedItems = {};
++             currentBoxCode = '';
++             
++             // 恢复箱码输入框
++             document.getElementById('boxCodeInput').value = '';
++             document.getElementById('boxCodeInput').style.display = 'block';
++             document.getElementById('currentBoxCodeGroup').style.display = 'none';
++             
++             // 清空SKU列表
+              updateSkuList();
+              updateButtonState();
+-         });
++         }
+  
+          // 获取SKU的待到货量
+                  }
+                  currentBoxCode = boxCode;
+-                 document.getElementById('currentBoxCode').textContent = boxCode;
++                 
++                 // 隐藏输入框，显示当前箱码
++                 e.target.style.display = 'none';
++                 document.getElementById('currentBoxCodeGroup').style.display = 'block';
++                 document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
++                 
+                  updateButtonState();
+                  return;
+                  // 非空箱且未绑定单据：显示SKU，禁用扫码和清空按钮，错误SKU用红色标注
+                  currentBoxCode = boxCode;
+-                 document.getElementById('currentBoxCode').textContent = boxCode;
++                 document.getElementById('currentBoxCodeGroup').style.display = 'block';
++                 document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
+                  scannedItems = {};
+                  (box.skus || []).forEach(item => {
+              // 空箱且未绑定单据：允许扫码
+              currentBoxCode = boxCode;
+-             document.getElementById('currentBoxCode').textContent = boxCode;
++             document.getElementById('currentBoxCodeGroup').style.display = 'block';
++             document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
+              scannedItems = {};
+              updateSkuList();
+              }
+  
+-             let chineseSku;
++             // 检查条码是否属于当前采购单
+              if (!validateSku(fnsku)) {
+-                 chineseSku = '<span style="color:#e04b31">不属于该采购单</span>';
+-             } else {
+-                 chineseSku = getChineseSku(fnsku);
+-             }
++                 showAlert('条码不属于当前采购单');
++                 e.target.value = '';
++                 return;
++             }
++ 
++             const chineseSku = getChineseSku(fnsku);
+              if (scannedItems[fnsku]) {
+                  scannedItems[fnsku].quantity += 1;
+```
+
+---
+
+我已经完成了以下修改：
+
+1. 添加了当前箱码显示区域：
+```html
+<div class="scan-group" id="currentBoxCodeGroup" style="display: none;">
+    <div class="current-box-code">当前箱码：<span id="currentBoxCodeDisplay"></span></div>
+</div>
+```
+
+2. 修改了清空按钮的功能：
+- 将"清空已扫条码"改为"清空页面"
+- 修改了按钮状态判断条件，现在基于`currentBoxCode`是否为空
+- 清空功能会同时清空箱码和SKU列表，并恢复箱码输入框
+
+3. 修改了条码校验逻辑：
+- 当条码不属于当前采购单时，直接显示提示"条码不属于当前采购单"
+- 不再将错误数据添加到列表中
+
+4. 隐藏了箱码输入框的叉号：
+```css
+.scan-input:not(:placeholder-shown) + .clear-input {
+    display: none;
+}
+```
+
+5. 修改了箱码输入框的切换逻辑：
+- 在箱码验证通过后，隐藏输入框，显示当前箱码
+- 在清空页面时，恢复输入框显示
+
+这些修改使得页面操作更加符合要求，需要我做其他调整吗？
+
+---
+
+_**User**_
+
+确认装箱需要恢复箱码输入框
+
+---
+
+_**Assistant**_
+
+好的，我来修改确认装箱后的处理逻辑：
+
+
+---
+
+```diff
+              currentBoxCode = '';
+              document.getElementById('boxCodeInput').value = '';
++             document.getElementById('boxCodeInput').style.display = 'block';
++             document.getElementById('currentBoxCodeGroup').style.display = 'none';
+              updateSkuList();
+              updateButtonState();
+```
+
+---
+
+我已经修改了`doConfirmBox`函数，在确认装箱成功后：
+1. 清空所有数据
+2. 恢复箱码输入框的显示
+3. 隐藏当前箱码显示
+4. 更新SKU列表和按钮状态
+
+这样在确认装箱后，页面会恢复到初始状态，用户可以继续扫描新的箱码。需要我做其他调整吗？
+
+---
+
+_**User**_
+
+新增箱子模式，输入箱码后，没有隐藏箱码输入框
+
+---
+
+_**Assistant**_
+
+是的，我来修改新增箱子模式下的箱码输入框处理逻辑：
+
+
+---
+
+```diff
+                  // 非空箱且未绑定单据：显示SKU，禁用扫码和清空按钮，错误SKU用红色标注
+                  currentBoxCode = boxCode;
++                 
++                 // 隐藏输入框，显示当前箱码
++                 e.target.style.display = 'none';
+                  document.getElementById('currentBoxCodeGroup').style.display = 'block';
+                  document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
++                 
+                  scannedItems = {};
+                  (box.skus || []).forEach(item => {
+              // 空箱且未绑定单据：允许扫码
+              currentBoxCode = boxCode;
++             
++             // 隐藏输入框，显示当前箱码
++             e.target.style.display = 'none';
+              document.getElementById('currentBoxCodeGroup').style.display = 'block';
+              document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
++             
+              scannedItems = {};
+              updateSkuList();
+```
+
+---
+
+我已经修改了新增箱子模式下的箱码输入框处理逻辑：
+
+1. 在非空箱且未绑定单据的情况下：
+   - 隐藏输入框
+   - 显示当前箱码
+   - 显示SKU列表
+   - 禁用扫码和清空按钮
+
+2. 在空箱且未绑定单据的情况下：
+   - 隐藏输入框
+   - 显示当前箱码
+   - 清空SKU列表
+   - 启用扫码功能
+
+这样在新增箱子模式下，无论是空箱还是非空箱，只要箱码验证通过，都会隐藏输入框并显示当前箱码。需要我做其他调整吗？
+
+---
+
+_**User**_
+
+新增箱子模式的清空页面按钮，也是在当前箱码不为空时就可以点击
+
+---
+
+_**Assistant**_
+
+是的，我来修改新增箱子模式下的清空页面按钮状态逻辑：
+
+
+---
+
+```diff
+              } else {
+                  clearButton.classList.remove('disabled');
++                 if (mode === 'repack') {
++                     // 重新装箱模式：需要有条码才能确认
+                      if (Object.keys(scannedItems).length > 0) {
+                          confirmButton.classList.remove('disabled');
+                      } else {
+                          confirmButton.classList.add('disabled');
++                     }
++                 } else {
++                     // 新增箱子模式：有箱码就可以确认
++                     confirmButton.classList.remove('disabled');
+                  }
+              }
+```
+
+---
+
+我已经修改了`updateButtonState`函数，区分了两种模式下的按钮状态：
+
+1. 重新装箱模式：
+   - 清空页面按钮：当前箱码不为空时可点击
+   - 确认装箱按钮：当前箱码不为空且有扫描的条码时可点击
+
+2. 新增箱子模式：
+   - 清空页面按钮：当前箱码不为空时可点击
+   - 确认装箱按钮：当前箱码不为空时即可点击
+
+这样在新增箱子模式下，只要扫描了箱码，清空页面按钮就可以点击了。需要我做其他调整吗？
+
+---
+
+_**User**_
+
+我扫描了CD250422000003，但是没法清空页面
+
+---
+
+_**Assistant**_
+
+我看到问题了，在新增箱子模式下，当扫描到非空箱时，我们设置了`clearBtn.disabled = true`，这导致清空页面按钮无法点击。让我修改这个逻辑：
+
+
+---
+
+```diff
+                  document.getElementById('currentBoxCodeGroup').style.display = 'block';
+                  document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
+-                 
+                  
+                  scannedItems = {};
+                  updateButtonState();
+                  document.getElementById('skuInput').disabled = true;
+-                 const clearBtn = document.querySelector('.clear-button');
+-                 clearBtn.disabled = true;
+-                 clearBtn.classList.add('disabled');
+                  return;
+              }
+```
+
+---
+
+我已经移除了非空箱情况下禁用清空页面按钮的代码。现在无论是空箱还是非空箱，只要扫描了箱码，清空页面按钮就可以点击了。
+
+这样修改后，当你扫描`CD250422000003`时，清空页面按钮应该可以正常点击了。需要我做其他调整吗？
+
+---
+
+_**User**_
+
+重新装箱、新增箱子：错误sku不再添加到列表中，而是弹窗提示“条码不属于当前采购单”
+
+---
+
+_**Assistant**_
+
+好的，我来修改条码校验的逻辑，让错误SKU不再添加到列表中：
+
+
+---
+
+```diff
+                  scannedItems = {};
+                  (box.skus || []).forEach(item => {
+-                     let chineseSku;
+                      if (!validateSku(item.fnsku)) {
+-                         chineseSku = '<span style="color:#e04b31">不属于该采购单</span>';
+-                     } else {
+-                         chineseSku = item.chinese_sku;
++                         showAlert('条码不属于当前采购单');
++                         return;
+                      }
+                      scannedItems[item.fnsku] = {
+-                         chineseSku: chineseSku,
++                         chineseSku: item.chinese_sku,
+                          quantity: item.quantity
+                      };
+```
+
+---
+
+我已经修改了条码校验的逻辑：
+
+1. 在非空箱显示SKU列表时：
+   - 如果SKU不属于当前采购单，直接显示提示"条码不属于当前采购单"
+   - 不再将错误SKU添加到列表中
+
+2. 在扫描条码时：
+   - 如果条码不属于当前采购单，直接显示提示"条码不属于当前采购单"
+   - 不再将错误条码添加到列表中
+
+这样无论是重新装箱还是新增箱子模式，错误SKU都不会添加到列表中，而是直接弹窗提示。需要我做其他调整吗？
+
+---
+
+_**User**_
+
+新增箱子扫描未绑定单据的非空箱，若箱内存在不属于采购单的条码，需要弹窗提示“箱内存在条码属于当前采购单，请检查”，并清空页面（箱码和条码输入框恢复）
+
+---
+
+_**Assistant**_
+
+好的，我来修改新增箱子模式下扫描非空箱的处理逻辑：
+
+
+---
+
+```diff
+                  
+                  scannedItems = {};
++                 let hasInvalidSku = false;
+                  (box.skus || []).forEach(item => {
+                      if (!validateSku(item.fnsku)) {
+-                         showAlert('条码不属于当前采购单');
++                         hasInvalidSku = true;
+                          return;
+                      }
+                      };
+                  });
++ 
++                 if (hasInvalidSku) {
++                     showAlert('箱内存在条码不属于当前采购单，请检查');
++                     // 清空页面
++                     scannedItems = {};
++                     currentBoxCode = '';
++                     document.getElementById('boxCodeInput').value = '';
++                     document.getElementById('boxCodeInput').style.display = 'block';
++                     document.getElementById('currentBoxCodeGroup').style.display = 'none';
++                     document.getElementById('skuInput').disabled = false;
++                     updateSkuList();
++                     updateButtonState();
++                     return;
++                 }
++ 
+                  updateSkuList();
+                  updateButtonState();
+```
+
+---
+
+我已经修改了新增箱子模式下扫描非空箱的处理逻辑：
+
+1. 添加了`hasInvalidSku`标志来检查是否存在不属于采购单的条码
+2. 当发现不属于采购单的条码时：
+   - 设置`hasInvalidSku`为`true`
+   - 不再继续添加SKU到列表中
+3. 在检查完所有SKU后：
+   - 如果存在无效SKU，显示提示"箱内存在条码不属于当前采购单，请检查"
+   - 清空页面（包括箱码和条码输入框）
+   - 恢复输入框状态
+   - 更新SKU列表和按钮状态
+
+这样当扫描到包含不属于采购单条码的非空箱时，会提示用户并清空页面。需要我做其他调整吗？
+
+---
+
+_**User**_
+
+发货修改的解绑箱子，箱码输入框和也要像上面那样改，再增加一个更换箱码的按钮（样式参考箱子清空）
+
+---
+
+_**Assistant**_
+
+好的，我来修改发货修改的解绑箱子页面，添加更换箱码按钮并修改箱码输入框的样式：
+
+
+---
+
+```diff
+          .button-area {
+              width: 100%;
+-             display: flex;
+-             justify-content: center;
+-             align-items: center;
++             display: grid;
++             grid-template-columns: 1fr 1fr;
++             gap: 20px;
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              background-color: #f5f5f5;
+              z-index: 100;
+-             padding: 15px 0;
++             padding: 15px 20px;
+          }
+          .button {
+              min-width: 200px;
+          }
++         .change-button {
++             background-color: #e04b31;
++             color: #fff;
++         }
++         .change-button.disabled {
++             opacity: 0.5;
++             cursor: not-allowed;
++         }
+          /* 弹窗样式 */
+          .modal-overlay {
+                  <button class="clear-input" onclick="clearBoxInput()"></button>
+              </div>
++             <div class="scan-group" id="currentBoxCodeGroup" style="display: none;">
++                 <div class="current-box-code">当前箱码：<span id="currentBoxCodeDisplay"></span></div>
++             </div>
+          </div>
+          <div class="list-area" id="skuList">
+      </div>
+      <div class="button-area">
++         <button class="button change-button disabled" id="changeButton" onclick="handleChangeBox()">更换箱码</button>
+          <button class="button confirm-button disabled" id="confirmButton" onclick="handleConfirmUnbind()">确认解绑</button>
+      </div>
+                      showAlert('箱码不属于该入库计划');
+                      document.getElementById('confirmButton').classList.add('disabled');
+-                     document.getElementById('confirmButton').disabled = true;
++                     document.getElementById('changeButton').classList.add('disabled');
+                      clearSkuList();
+                      document.getElementById('boxCodeInput').value = '';
++                     boxCode = null;
+                      return;
+                  }
+                  updateSkuList();
+                  document.getElementById('confirmButton').classList.remove('disabled');
+-                 document.getElementById('confirmButton').disabled = false;
++                 document.getElementById('changeButton').classList.remove('disabled');
+              }, 300);
+          }
+              document.getElementById('boxCodeInput').value = '';
+              document.getElementById('confirmButton').classList.add('disabled');
+-             document.getElementById('confirmButton').disabled = true;
++             document.getElementById('changeButton').classList.add('disabled');
+          }
+  
+              updateSkuList();
+              document.getElementById('confirmButton').classList.add('disabled');
+-             document.getElementById('confirmButton').disabled = true;
++             document.getElementById('changeButton').classList.add('disabled');
+          }
+  
+              }, 2000);
+          }
++ 
++         // 更新按钮状态
++         function updateButtonState() {
++             const confirmButton = document.getElementById('confirmButton');
++             const changeButton = document.getElementById('changeButton');
++             if (!boxCode) {
++                 confirmButton.classList.add('disabled');
++                 changeButton.classList.add('disabled');
++                 document.getElementById('boxCodeInput').style.display = 'block';
++                 document.getElementById('currentBoxCodeGroup').style.display = 'none';
++             } else {
++                 confirmButton.classList.remove('disabled');
++                 changeButton.classList.remove('disabled');
++             }
++         }
++ 
++         // 处理更换箱码
++         function handleChangeBox() {
++             if (document.getElementById('changeButton').classList.contains('disabled')) return;
++             
++             // 恢复箱码输入框
++             document.getElementById('boxCodeInput').value = '';
++             document.getElementById('boxCodeInput').style.display = 'block';
++             document.getElementById('currentBoxCodeGroup').style.display = 'none';
++             
++             // 清空SKU列表
++             clearSkuList();
++             boxCode = null;
++             updateButtonState();
++         }
++ 
++         // 箱码输入框事件监听
++         document.getElementById('boxCodeInput').addEventListener('keypress', function(e) {
++             if (e.key !== 'Enter') return;
++             const input = document.getElementById('boxCodeInput');
++             boxCode = input.value.trim();
++             if (!boxCode) return;
++             
++             // 校验箱码是否属于当前入库计划
++             if (!planData.bound_box_codes.includes(boxCode)) {
++                 showAlert('箱码不属于该入库计划');
++                 document.getElementById('confirmButton').classList.add('disabled');
++                 document.getElementById('changeButton').classList.add('disabled');
++                 clearSkuList();
++                 input.value = '';
++                 boxCode = null;
++                 return;
++             }
++             
++             // 校验通过，展示SKU列表
++             skuList = boxSkuData[boxCode] || [];
++             updateSkuList();
++             
++             // 隐藏输入框，显示当前箱码
++             input.style.display = 'none';
++             document.getElementById('currentBoxCodeGroup').style.display = 'block';
++             document.getElementById('currentBoxCodeDisplay').textContent = boxCode;
++             
++             updateButtonState();
++         });
+      </script>
+  </body>
+```
+
+---
+
+我已经修改了解绑箱子页面：
+
+1. 添加了更换箱码按钮：
+   - 样式与清空按钮一致（红色背景）
+   - 位置在确认解绑按钮左侧
+   - 按钮状态与确认解绑按钮同步
+
+2. 修改了箱码输入框的样式：
+   - 添加了当前箱码显示区域
+   - 扫描箱码后隐藏输入框，显示当前箱码
+   - 点击更换箱码按钮时恢复输入框
+
+3. 添加了相关功能：
+   - `updateButtonState`函数：统一管理按钮状态
+   - `handleChangeBox`函数：处理更换箱码操作
+   - 修改了箱码输入框的事件监听逻辑
+
+4. 优化了按钮区域的布局：
+   - 使用grid布局，两个按钮等宽排列
+   - 添加了合适的间距和内边距
+
+这样修改后，解绑箱子页面的交互逻辑与重新装箱页面保持一致。需要我做其他调整吗？
+
+---
+
+_**User**_
+
+解绑箱子：1、隐藏输入框叉号；2、确认解绑后需要恢复输入框；3、
+
+---
+
+_**Assistant**_
+
 
 
 ---
